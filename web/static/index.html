@@ -130,6 +130,11 @@ details summary{font-family:var(--font-display)}
 .face:hover{box-shadow:0 0 0 6px #0b0c0e,0 0 0 7px var(--eye),0 25px 60px rgba(0,0,0,.6),0 0 40px var(--eye-glow)}
 .sw{width:22px;height:22px;border-radius:7px;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 10px rgba(0,0,0,.4)}
 .sw[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 14px currentColor}
+.cmds{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.cmd{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px!important;border-radius:16px!important}
+.cmd .i{font-size:22px;line-height:1}
+.cmd b{font-family:var(--font-display);font-size:15px}
+.cmd small{color:var(--muted);font-weight:400;font-size:12px}
 .hello{font-family:var(--font-display)}
 .hello h1{font-weight:300;font-size:clamp(34px,5vw,54px);line-height:1.05;margin:0 0 8px;letter-spacing:.005em}
 .hello h1 em{font-style:normal;color:var(--eye);text-shadow:0 0 22px var(--eye-glow)}
@@ -172,6 +177,11 @@ details summary{font-family:var(--font-display)}
       <div class="card" id="reconpanel" hidden style="margin-bottom:12px">
         <div class="row" style="margin-bottom:6px"><b>Reconexión</b><span class="spacer"></span><button class="btn" id="reconclose" style="padding:2px 10px" aria-label="Cerrar">✕</button></div>
         <ol class="steps" id="reconsteps" style="margin:0"></ol>
+      </div>
+      <div class="row" style="margin:-4px 0 14px">
+        <button class="btn" id="sleepbtn" title="Vector no se puede apagar a distancia: se duerme y despierta con «Hey Vector» o tocándolo">⏻ Dormir</button>
+        <button class="btn" data-cmd="intent_system_charger">🔌 Ir a la base</button>
+        <span class="note" style="margin:0">Apagarlo del todo solo se puede con el botón de la espalda (mantener pulsado).</span>
       </div>
       <div class="grid tiles">
         <div class="card tile"><div class="k">Batería</div><div class="v" id="t-bat">—</div><div class="s" id="t-bat-s">&nbsp;</div></div>
@@ -244,14 +254,17 @@ details summary{font-family:var(--font-display)}
   </section>
 
   <section id="control" class="card">
-    <h2>Más acciones</h2>
-    <div class="row">
-      <button class="btn" data-act="headup">Cabeza ↑</button><button class="btn" data-act="headdown">Cabeza ↓</button>
-      <button class="btn" data-act="liftup">Brazo ↑</button><button class="btn" data-act="liftdown">Brazo ↓</button>
-      <button class="btn" data-act="wake">Simular «Hey Vector»</button>
-      <label class="row" style="gap:6px">Volumen <select id="vol" aria-label="Volumen">
+    <div class="row" style="margin-bottom:6px">
+      <h2 style="margin:0">Comandos</h2><span class="spacer"></span>
+      <label class="row" style="gap:6px;font-size:14px">Volumen <select id="vol" aria-label="Volumen">
         <option value="0">Silencio</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">Máx.</option>
       </select></label>
+    </div>
+    <p class="note" style="margin:0 0 12px">Las mismas órdenes que entiende por voz, sin tener que decirlas. Vector las hace a su manera (y a veces con su propia personalidad).</p>
+    <div class="cmds" id="cmds"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" data-act="headup">Cabeza ↑</button><button class="btn" data-act="headdown">Cabeza ↓</button>
+      <button class="btn" data-act="liftup">Brazo ↑</button><button class="btn" data-act="liftdown">Brazo ↓</button>
     </div>
     <div class="msg" id="ctrlmsg" aria-live="polite"></div>
   </section>
@@ -750,6 +763,44 @@ $("#saytext").addEventListener("keydown", (e) => e.key === "Enter" && !$("#saybt
 $("#vol").onchange = async (e) => {
   try { await sdk("volume", {volume: e.target.value}); $("#ctrlmsg").textContent = "Volumen cambiado ✓"; }
   catch (err) { $("#ctrlmsg").textContent = "Error: " + err.message; }
+};
+
+/* ---------- Comandos (app intents que acepta el firmware: user_intent_map.json) ---------- */
+const CMDS = [
+  ["🎲", "Explorar", "Se pone a curiosear por la zona", "explore_start"],
+  ["🏃", "Ven aquí", "Te busca y viene hacia ti", "intent_imperative_come"],
+  ["👀", "Mírame", "Busca tu cara y te mira", "intent_imperative_lookatme"],
+  ["👉", "Mira por allí", "Gira y mira hacia otro lado", "intent_imperative_lookoverthere"],
+  ["💃", "Baila", "Baila (mejor con música)", "intent_imperative_dance"],
+  ["🙋", "¿Quién soy?", "Intenta reconocerte y decir tu nombre", "intent_names_ask"],
+  ["🧊", "Busca el cubo", "Busca su cubo con la mirada", "intent_imperative_findcube"],
+  ["🫳", "Trae el cubo", "Va a por el cubo y lo levanta", "intent_imperative_fetchcube"],
+  ["🔌", "Ir a la base", "Vuelve a su cargador", "intent_system_charger"],
+  ["🤫", "Silencio", "Deja de hacer ruido un rato", "intent_imperative_quiet"],
+  ["😴", "Dormir", "Se va a dormir (no se apaga)", "intent_system_sleep"],
+];
+$("#cmds").innerHTML = CMDS.map(([i, n, d, intent]) =>
+  `<button class="btn cmd" data-cmd="${intent}"><span class="i" aria-hidden="true">${i}</span><b>${n}</b><small>${d}</small></button>`).join("") +
+  `<button class="btn cmd" data-act="wake"><span class="i" aria-hidden="true">👂</span><b>Escúchame</b><small>Como decir «Hey Vector»: luego háblale</small></button>`;
+async function runCmd(intent, label) {
+  if (!SERIAL) return $("#ctrlmsg").textContent = "Sin robot registrado todavía.";
+  if (manual) return $("#ctrlmsg").textContent = "Estás en control manual: pulsa «Modo libre» para que pueda obedecer.";
+  $("#ctrlmsg").textContent = `Enviando «${label}»…`;
+  try { await sdk("cloud_intent", {intent}); $("#ctrlmsg").textContent = `«${label}» enviado ✓`; emote("happy", 1000); }
+  catch (e) { $("#ctrlmsg").textContent = "Error: " + e.message; }
+}
+// este botón se crea después del enlace genérico de [data-act]: se le asigna aquí
+$('#cmds [data-act="wake"]').onclick = async () => {
+  if (!SERIAL) return $("#ctrlmsg").textContent = "Sin robot registrado todavía.";
+  try { await ACTS.wake(); $("#ctrlmsg").textContent = "Escuchando: háblale ahora ✓"; } catch (e) { $("#ctrlmsg").textContent = "Error: " + e.message; }
+};
+document.querySelectorAll("[data-cmd]").forEach((b) => b.onclick = () =>
+  runCmd(b.dataset.cmd, (CMDS.find((c) => c[3] === b.dataset.cmd) || [, b.textContent.trim()])[1]));
+$("#sleepbtn").onclick = async () => {
+  if (!confirm("¿Mandar a Vector a dormir? Despertará con «Hey Vector» o al tocarlo.")) return;
+  await runCmd("intent_system_sleep", "Dormir");
+  setTimeout(() => face.classList.add("sleep"), 800);  // la web también se duerme…
+  setTimeout(() => mood === "ok" && face.classList.remove("sleep"), 6000);  // …un momento
 };
 
 /* ---------- Cámara (MJPEG de wire-pod reenviado por server.py) ---------- */

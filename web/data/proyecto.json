@@ -162,6 +162,11 @@
       "fecha": "2026-11-19",
       "titulo": "Luces: espalda no, cubo sí",
       "texto": "La API externa del robot no tiene órdenes para las luces de la espalda (solo las usan sus animaciones internas): personalizarlas exige firmware propio (RainbOS/ClaudOS, Fase 8). El cubo sí: 4 luces RGB por esquina con SetCubeLights. examples/python/cubo.py listo; primera prueba sin conexión porque el cubo no tenía pila."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Comandos y «Dormir»",
+      "texto": "El firmware acepta 21 órdenes externas (app intents, user_intent_map.json de wire-os-victor); el resto solo por voz. La web lista 12 en tarjetas (explorar, ven aquí, mírame, baila, ¿quién soy?, cubo, ir a la base, silencio, dormir, escúchame) vía /api-sdk/cloud_intent. No existe orden de apagado: «⏻ Dormir» (con confirmación) es lo más cercano; apagarlo del todo solo con el botón de la espalda."
     }
   ],
   "protocolo_wifi": [
@@ -230,6 +235,10 @@
     {
       "pregunta": "¿Se pueden sacar sus animaciones y el logo de Anki? ¿Y cambiarlos?",
       "respuesta": "En parte. En el repositorio os-vector/wire-os-victor están la animación de arranque con el logo (resources/config/engine/animations/boot_anim.raw, fotogramas RGB565; boot_anim_20.raw para el 2.0) y unos 120 iconos PNG (emparejamiento, batería…). Los ojos no son imágenes: se dibujan por código en vic-anim. Cambiar el arranque es posible (si existe /persist/boot_anim.raw lo usa en lugar del de Anki), pero requiere SSH, es decir, robot desbloqueado (Fase 8). Son recursos de Anki/DDL: uso personal sí, no subirlos al repositorio público."
+    },
+    {
+      "pregunta": "¿Se puede apagar el robot desde la web?",
+      "respuesta": "No del todo: su API no tiene orden de apagado (solo «actualizar y reiniciar» para OTA). La web ofrece «Dormir»: deja de moverse y queda en reposo hasta que le dices «Hey Vector» o lo tocas. Para apagarlo de verdad, mantener pulsado el botón de la espalda fuera de la base."
     }
   ]
 }
