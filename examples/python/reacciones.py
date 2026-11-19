@@ -55,17 +55,24 @@ def al_ver_cara(robot, event_type, event, *args):
         pendientes.put(random.choice(SONRISA))
 
 
-def decir(robot, texto):
-    try:
-        robot.conn.request_control(ControlPriorityLevel.DEFAULT_PRIORITY, timeout=5)
-        robot.behavior.say_text(texto)
-    except Exception as e:  # p. ej. otro programa o la web tienen el control
-        log(f"No he podido hablar: {e}")
-    finally:
+def decir(robot, texto, intentos=2):
+    # Al acariciarlo, Vector hace su propia reacción (ronroneo) y say_text falla con
+    # «Failed to say text» mientras dura: se espera un poco y se reintenta una vez.
+    for i in range(intentos):
         try:
-            robot.conn.release_control(timeout=5)
-        except Exception:
-            pass
+            robot.conn.request_control(ControlPriorityLevel.DEFAULT_PRIORITY, timeout=5)
+            robot.behavior.say_text(texto)
+            return
+        except Exception as e:  # p. ej. ocupado con su propia animación, o la web tiene el control
+            error = str(e).splitlines()[0]
+        finally:
+            try:
+                robot.conn.release_control(timeout=5)
+            except Exception:
+                pass
+        if i + 1 < intentos:
+            time.sleep(2.5)
+    log(f"No he podido hablar: {error}")
 
 
 def main():

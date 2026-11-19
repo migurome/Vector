@@ -45,8 +45,8 @@
     {
       "id": "F5",
       "nombre": "SDK de Python",
-      "avance": 90,
-      "detalle": "Python 3.12 + .venv con wirepod_vector_sdk 0.8.1; scripts/configurar_sdk.py (certificado leído del robot). Ejemplos: hola_vector.py, pantalla.py (imágenes/GIF), cubo.py (luces del cubo) y reacciones.py (saluda por su nombre, comenta tu sonrisa, agradece caricias). La web muestra imágenes, GIF o texto en su cara. Falta: probar reacciones.py contigo delante para cerrar la fase."
+      "avance": 100,
+      "detalle": "Python 3.12 + .venv con wirepod_vector_sdk 0.8.1; scripts/configurar_sdk.py (certificado leído del robot). Ejemplos: hola_vector.py, pantalla.py, cubo.py y reacciones.py. Desde la web: imágenes/GIF/texto en su cara y reacciones activables en Proyecto (saludo por nombre validado). Fase cerrada."
     },
     {
       "id": "F6",
@@ -182,6 +182,11 @@
       "fecha": "2026-11-19",
       "titulo": "Prueba de autonomía: 30 minutos",
       "texto": "Salió de la base al 100 % a las 14:55 y volvió él solo a cargar a las 15:25 (3,57 V, nivel 1), sin apagarse. Descubrimiento: fuera de la base el robot congela voltaje y nivel (3,938 V idénticos los 30 min); solo los actualiza al entrar o salir de la base. La web estima ahora el % fuera de la base por el tiempo transcurrido con esa autonomía. 30 min sugiere algo de desgaste en una batería de 2018 (cifra de referencia para un Vector nuevo no confirmada)."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Fase 5 cerrada: reacciones probadas",
+      "texto": "Desde la web (Proyecto → Reacciones): te reconoció al instante y dijo «Anda, Miguel! Hola!». La caricia se detectó pero say_text falló («Failed to say text») porque Vector estaba con su propia reacción de ronroneo; ahora se espera 2,5 s y se reintenta una vez. Pendiente de ver: el comentario a la sonrisa."
     }
   ],
   "protocolo_wifi": [
@@ -220,15 +225,6 @@
         ".venv\\Scripts\\python.exe examples\\python\\reacciones.py 15 — 15 minutos de reacciones: saluda a quien reconoce, comenta si sonríes y agradece caricias"
       ],
       "nota": "pantalla.py adapta cualquier imagen a 184×96 sin deformarla (bandas negras si la proporción no coincide)."
-    },
-    {
-      "titulo": "Pendiente para cerrar la Fase 5",
-      "intro": "El 10 % que falta:",
-      "pasos": [
-        "Probar reacciones.py con alguien delante (cara reconocida) y acariciándolo.",
-        "Si convence, ofrecerlo como interruptor en la web (activar/desactivar reacciones)."
-      ],
-      "nota": ""
     }
   ],
   "faq": [
