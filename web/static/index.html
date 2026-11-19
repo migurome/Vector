@@ -546,6 +546,8 @@ async function loadEyes() {  // al abrir, la web adopta el color que tenga el ro
   if (!SERIAL) return paintEyes(EYES[0][1], EYES[0][0]);
   try {
     const st = await sdk("get_sdk_settings");
+    const vol = findKey(st, "master_volume");  // el selector mostraba «Silencio» por ser la 1ª opción, no el valor real
+    if (vol !== undefined) $("#vol").value = String(vol);
     const custom = findKey(st, "custom_eye_color");
     if (custom && custom.enabled) { eyeIdx = -1; return paintEyes(hslToHex(custom.hue, custom.saturation, .58), "personalizado"); }
     eyeIdx = +(findKey(st, "eye_color") || 0);
