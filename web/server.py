@@ -88,6 +88,40 @@ def muestra():
     return s
 
 
+VENV_PY = BASE.parent / ".venv" / "Scripts" / "python.exe"
+REACCIONES = {"proc": None, "inicio": None, "lineas": []}
+_reac_lock = threading.Lock()
+
+
+def _leer_salida(proc):
+    for ln in proc.stdout:
+        ln = ln.rstrip()
+        if ln and " INFO " not in ln and "WARNING" not in ln:  # solo lo que escribe el programa, no el log del SDK
+            with _reac_lock:
+                REACCIONES["lineas"] = (REACCIONES["lineas"] + [ln])[-200:]
+
+
+def reacciones(accion, minutos=10):
+    import subprocess
+    with _reac_lock:
+        p = REACCIONES["proc"]
+        activo = p is not None and p.poll() is None
+        if accion == "start" and not activo:
+            if not VENV_PY.exists():
+                return {"error": "falta el entorno .venv con el SDK (ver guía del SDK)"}
+            p = subprocess.Popen([str(VENV_PY), "-I", str(BASE.parent / "examples" / "python" / "reacciones.py"), f"{minutos:g}"],
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                                 errors="replace", env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"})
+            REACCIONES.update(proc=p, inicio=time.time(), lineas=[])
+            threading.Thread(target=_leer_salida, args=(p,), daemon=True).start()
+            activo = True
+        elif accion == "stop" and activo:
+            p.terminate()
+            REACCIONES["lineas"].append(time.strftime("%H:%M:%S") + " Parado desde la web.")
+            activo = False
+        return {"activo": activo, "inicio": REACCIONES["inicio"], "lineas": REACCIONES["lineas"][-60:]}
+
+
 def reconectar():
     """Diagnóstico paso a paso + renovación de la conexión. Devuelve los pasos para mostrarlos en la web."""
     pasos = []
@@ -251,7 +285,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not 0 < n <= 8 * 1024 * 1024:
             return self.enviar(400, json.dumps({"error": "imagen vacía o mayor de 8 MB"}).encode())
         datos = self.rfile.read(n)
-        py = BASE.parent / ".venv" / "Scripts" / "python.exe"
+        py = VENV_PY
         script = BASE.parent / "examples" / "python" / "pantalla.py"
         if not py.exists():
             return self.enviar(501, json.dumps({"error": "falta el entorno .venv con el SDK (ver guía del SDK)"}).encode())
@@ -281,6 +315,15 @@ class Handler(SimpleHTTPRequestHandler):
             from urllib.parse import parse_qs, urlparse
             horas = float(parse_qs(urlparse(self.path).query).get("horas", ["24"])[0])
             return self.enviar(200, json.dumps(leer_telemetria(horas)).encode())
+        if self.path.startswith("/reacciones"):
+            from urllib.parse import parse_qs, urlparse
+            q = parse_qs(urlparse(self.path).query)
+            try:
+                minutos = max(1, min(float(q.get("min", ["10"])[0]), 120))
+            except ValueError:
+                minutos = 10
+            r = reacciones(q.get("accion", ["estado"])[0], minutos)
+            return self.enviar(200, json.dumps(r, ensure_ascii=False).encode())
         if self.path == "/reconectar":
             return self.enviar(200, json.dumps(reconectar(), ensure_ascii=False).encode())
         if self.path.startswith("/voz"):

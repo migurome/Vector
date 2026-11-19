@@ -304,9 +304,30 @@ details summary{font-family:var(--font-display)}
 
 <div id="tab-proyecto" role="tabpanel" aria-labelledby="tabbtn-proyecto" hidden>
   <nav class="subnav" aria-label="Apartados del proyecto">
-    <a href="#telemetria">Telemetría</a><a href="#voz">Registro de voz</a><a href="#vida">Estadísticas</a><a href="#fases">Fases</a>
+    <a href="#reacciones">Reacciones</a><a href="#telemetria">Telemetría</a><a href="#voz">Registro de voz</a><a href="#vida">Estadísticas</a><a href="#fases">Fases</a>
     <a href="#guias">Guías</a><a href="#faq">Preguntas</a><a href="#memoria">Memoria</a><a href="#wifi">Cambio de Wi-Fi</a><a href="#ficha-sec">Ficha</a>
   </nav>
+
+  <section id="reacciones" class="card">
+    <div class="row" style="margin-bottom:8px">
+      <h2 style="margin:0">Reacciones <small>en pruebas (Fase 5)</small></h2>
+      <span class="pill" id="reacstate"><span class="dot" style="background:var(--muted)"></span><span>Paradas</span></span>
+      <span class="spacer"></span>
+      <label class="row" style="gap:6px;font-size:14px">Minutos <input type="number" id="reacmin" value="10" min="1" max="120" style="width:72px;flex:none"></label>
+      <button class="btn primary" id="reacbtn">Activar</button>
+    </div>
+    <div class="grid two">
+      <div>
+        <ol class="steps">
+          <li><b>Saludo.</b> Ponte delante a unos 50 cm, con la cara a la altura de su cámara. Debería decir «Hola Miguel!». Si no te reconoce en medio minuto, dile «Hey Vector, me llamo Miguel» y repite.</li>
+          <li><b>Sonrisa.</b> Tras el saludo, sigue delante y sonríe: lo comenta (como mucho una vez cada 3 min).</li>
+          <li><b>Caricias.</b> Acaríciale la espalda un segundo o más: reacciona (cada 20 s como mucho).</li>
+        </ol>
+        <div class="note">Funciona también en la base. Si estás en control manual, pásalo a «Modo libre» o no podrá hablar.</div>
+      </div>
+      <div><table id="reaclog"><tr><td class="empty">El registro aparecerá aquí al activarlas.</td></tr></table></div>
+    </div>
+  </section>
 
   <section id="telemetria" class="card">
     <div class="row" style="margin-bottom:8px">
@@ -910,6 +931,31 @@ $("#scrsend").onclick = async () => {
   } catch (e) { $("#scrmsg").textContent = "Error: " + e.message; }
   b.disabled = false;
 };
+
+/* ---------- Reacciones (server.py lanza examples/python/reacciones.py) ---------- */
+let reacTimer = null;
+function pintarReacciones(r) {
+  const on = !!r.activo;
+  $("#reacstate").innerHTML = on ? `<span class="dot" style="background:var(--good)"></span><span>Activas</span>`
+                                 : `<span class="dot" style="background:var(--muted)"></span><span>Paradas</span>`;
+  $("#reacbtn").textContent = on ? "Parar" : "Activar";
+  $("#reacbtn").classList.toggle("primary", !on);
+  const lineas = (r.lineas || []).slice().reverse();
+  $("#reaclog").innerHTML = lineas.length
+    ? lineas.map((l) => { const m = l.match(/^(\d\d:\d\d:\d\d) (.*)$/);
+        return m ? `<tr><td style="white-space:nowrap;color:var(--muted)">${m[1]}</td><td>${esc(m[2])}</td></tr>` : `<tr><td colspan="2">${esc(l)}</td></tr>`; }).join("")
+    : `<tr><td class="empty">${on ? "Esperando a que pase algo…" : "El registro aparecerá aquí al activarlas."}</td></tr>`;
+  clearTimeout(reacTimer);
+  if (on) reacTimer = setTimeout(() => api("/reacciones?accion=estado").then(pintarReacciones).catch(() => {}), 2000);
+}
+$("#reacbtn").onclick = async () => {
+  const b = $("#reacbtn"); b.disabled = true;
+  const parar = b.textContent === "Parar";
+  try { pintarReacciones(await api(`/reacciones?accion=${parar ? "stop" : "start"}&min=${encodeURIComponent($("#reacmin").value)}`)); }
+  catch (e) { $("#reaclog").innerHTML = `<tr><td class="empty">Error: ${esc(e.message)}</td></tr>`; }
+  b.disabled = false;
+};
+api("/reacciones?accion=estado").then(pintarReacciones).catch(() => {});
 
 /* ---------- Cámara (MJPEG de wire-pod reenviado por server.py) ---------- */
 function camOff(msg = "") {
