@@ -258,6 +258,10 @@ function setStatus(kind, text) {
 async function loadProyecto() {
   const p = await api("/proyecto");
   const r = p.robot;
+  // nº de serie e IP reales salen de wire-pod (el JSON del repo solo lleva marcadores)
+  const live = await api("/api-sdk/get_sdk_info").catch(() => null);
+  const bot = live && live.robots && live.robots[0];
+  if (bot) { r.serie = bot.esn; r.ip = bot.ip_address; }
   $("#botname").textContent = r.nombre;
   const rows = [["Nombre", r.nombre], ["Nº de serie", r.serie], ["Firmware", r.firmware], ["Origen", r.firmware_origen],
     ["Hardware", r.hardware], ["Red", r.red], ["IP registrada", r.ip], ["Cuenta", r.estado_cuenta], ["Servidor", r.servidor], ["Voz", r.voz]];
