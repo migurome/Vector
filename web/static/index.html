@@ -370,6 +370,16 @@ function batteryPct(v, cargando) {
   }
   return 100;
 }
+// % de una muestra, o null si el dato no es fiable. Reglas sacadas de la telemetría real:
+//  - en la base, sin cargar y nivel 3 = carga terminada: el firmware envía un voltaje congelado
+//    (3,557422 V idéntico durante 25 min), así que es 100 %, no lo que diga ese voltaje;
+//  - fuera de la base suele dar 0 V y un «nivel 3» falso: sin dato.
+function pctOf(s) {
+  if (!s || !s.online) return null;
+  if (s.en_base && !s.cargando && s.nivel === 3) return 100;
+  if (s.voltios > 0) return batteryPct(s.voltios, s.cargando);
+  return null;
+}
 function batteryWarn(pct, enBase) {
   let el = $("#batwarn");
   if (!el) { el = document.createElement("div"); el.id = "batwarn"; el.className = "card"; el.setAttribute("role", "alert");
@@ -557,13 +567,14 @@ async function loadTelemetria() {
   const lastOn = [...samples].reverse().find((s) => s.online);
   // % solo a partir del voltaje: fuera de la base este firmware da 0 V y un «nivel 3» que no es fiable
   // (se ha apagado varias veces mientras decía «llena»). Se usa la última lectura con voltaje.
-  const lastV = [...samples].reverse().find((s) => s.online && s.voltios > 0);
+  const lastV = [...samples].reverse().find((s) => pctOf(s) !== null);
   if (lastV) {
-    const pct = batteryPct(lastV.voltios, lastV.cargando);
+    const pct = pctOf(lastV);
     const ageMin = Math.round((Date.now() / 1000 - lastV.t) / 60);
     const fresh = lastOn && lastOn.t === lastV.t;
+    const full = lastV.en_base && !lastV.cargando && lastV.nivel === 3;
     $("#t-bat").innerHTML = `${pct} %<div class="bar" style="margin-top:6px"><i style="width:${pct}%;${pct < 20 ? "background:var(--crit);box-shadow:none" : ""}"></i></div>`;
-    $("#t-bat-s").textContent = `${lastV.voltios.toFixed(2)} V${lastV.cargando ? " · cargando" : ""}` +
+    $("#t-bat-s").textContent = (full ? "Carga completa · en la base" : `${lastV.voltios.toFixed(2)} V${lastV.cargando ? " · cargando (estimado)" : ""}`) +
       (fresh ? "" : ` · dato de hace ${ageMin} min (fuera de la base no informa)`);
     batteryWarn(pct, lastV.cargando || lastV.en_base);
   } else if (lastOn) {
@@ -591,8 +602,8 @@ function drawChart() {
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const t1 = Date.now() / 1000, t0 = t1 - horas * 3600;
   // % de batería estimado por voltaje; solo muestras con voltaje (el «nivel» del robot no es fiable)
-  const val = (s) => batteryPct(s.voltios, s.cargando);
-  const on = samples.filter((s) => s.online && s.voltios > 0);
+  const val = pctOf;
+  const on = samples.filter((s) => pctOf(s) !== null);
   $("#charttitle").textContent = "Batería (%)";
   const vmin = 0, vmax = 100;
   const x = (t) => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
@@ -636,7 +647,7 @@ function drawChart() {
     $("#xh").setAttribute("x1", cx); $("#xh").setAttribute("x2", cx); $("#xh").setAttribute("visibility", "visible");
     $("#xd").setAttribute("cx", cx); $("#xd").setAttribute("cy", cy); $("#xd").setAttribute("visibility", "visible");
     const tip = $("#tip");
-    tip.innerHTML = `${fmtT(s.t)} · <b>${val(s)} %</b> (${s.voltios.toFixed(2)} V) · ${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
+    tip.innerHTML = `${fmtT(s.t)} · <b>${val(s)} %</b> (${s.en_base && !s.cargando && s.nivel === 3 ? "carga completa" : s.voltios.toFixed(2) + " V"}) · ${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
     tip.style.left = (cx * r.width / W) + "px"; tip.style.top = (cy * r.height / H) + "px"; tip.style.display = "block";
   };
   svg.onmouseleave = () => { $("#tip").style.display = "none"; $("#xh")?.setAttribute("visibility", "hidden"); $("#xd")?.setAttribute("visibility", "hidden"); };

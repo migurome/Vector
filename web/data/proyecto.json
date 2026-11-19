@@ -167,6 +167,11 @@
       "fecha": "2026-11-19",
       "titulo": "Comandos y «Dormir»",
       "texto": "El firmware acepta 21 órdenes externas (app intents, user_intent_map.json de wire-os-victor); el resto solo por voz. La web lista 12 en tarjetas (explorar, ven aquí, mírame, baila, ¿quién soy?, cubo, ir a la base, silencio, dormir, escúchame) vía /api-sdk/cloud_intent. No existe orden de apagado: «⏻ Dormir» (con confirmación) es lo más cercano; apagarlo del todo solo con el botón de la espalda."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Corrección: el 6 % era un voltaje congelado",
+      "texto": "Con la carga completa, en la base y sin cargar, el robot envía un voltaje fijo (3,557422 V idéntico durante 25 min) y nivel 3: la web lo convertía en un 6 %. Ahora ese estado cuenta como 100 % («carga completa»). Corrige también la entrada anterior: el apagado de las 12:15 tenía ese mismo patrón, así que probablemente no fue por batería; los de 12:51 y 13:02 sí (a las 13:06 cargaba desde 3,74 V). La descarga completa como «mantenimiento» se descarta: en litio acelera el desgaste."
     }
   ],
   "protocolo_wifi": [
