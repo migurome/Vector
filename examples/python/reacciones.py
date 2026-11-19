@@ -69,13 +69,13 @@ def esperar_sin_tocar(robot, quieto=0.5, maximo=8):
         time.sleep(0.1)
 
 
-def decir(robot, texto, intentos=3, prioridad=ControlPriorityLevel.DEFAULT_PRIORITY):
-    # Al acariciarlo, Vector hace su propia reacción (ronroneo) que ocupa la voz: say_text falla con
-    # «Failed to say text» aun reintentando a los 2,5 s (probado). Para las caricias se pide prioridad
-    # alta (interrumpe sus comportamientos, como el control remoto) y se reintenta.
+def decir(robot, texto, intentos=3, animacion_si_falla=None):
+    # Probado el 2026-11-19: con prioridad OVERRIDE_BEHAVIORS say_text falla SIEMPRE («Failed to say
+    # text»); con DEFAULT funciona, salvo justo tras una caricia (su ronroneo ocupa la voz unos segundos).
+    # Por eso: prioridad DEFAULT, varios intentos espaciados y, si no hay manera, una animación suya.
     for i in range(intentos):
         try:
-            robot.conn.request_control(prioridad, timeout=5)
+            robot.conn.request_control(ControlPriorityLevel.DEFAULT_PRIORITY, timeout=5)
             robot.behavior.say_text(texto)
             return
         except Exception as e:  # p. ej. ocupado con su propia animación, o la web tiene el control
@@ -86,8 +86,22 @@ def decir(robot, texto, intentos=3, prioridad=ControlPriorityLevel.DEFAULT_PRIOR
             except Exception:
                 pass
         if i + 1 < intentos:
-            time.sleep(1.5)
+            time.sleep(2)
     log(f"No he podido hablar: {error}")
+    if animacion_si_falla:
+        try:
+            robot.conn.request_control(ControlPriorityLevel.DEFAULT_PRIORITY, timeout=5)
+            # se pasa el trigger ya construido: por nombre, el SDK carga antes la lista entera de
+            # animaciones y esa consulta caduca (DEADLINE_EXCEEDED, probado)
+            robot.anim.play_animation_trigger(protocol.AnimationTrigger(name=animacion_si_falla))
+            log(f"En su lugar, animación {animacion_si_falla}")
+        except Exception as e:
+            log(f"Tampoco la animación: {str(e).splitlines()[0]}")
+        finally:
+            try:
+                robot.conn.release_control(timeout=5)
+            except Exception:
+                pass
 
 
 def main():
@@ -107,7 +121,7 @@ def main():
                         texto = random.choice(CARICIAS)
                         esperar_sin_tocar(robot)
                         log(f"Dice: {texto}")
-                        decir(robot, texto, prioridad=ControlPriorityLevel.OVERRIDE_BEHAVIORS_PRIORITY)
+                        decir(robot, texto, animacion_si_falla="Feedback_ILoveYou")
                         tocando_desde = None
                 else:
                     tocando_desde = None
