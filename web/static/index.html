@@ -132,7 +132,6 @@ details summary{font-family:var(--font-display)}
 .sw[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 14px currentColor}
 .cmds{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
 .cmd{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px!important;border-radius:16px!important}
-.cmd .i{font-size:22px;line-height:1}
 .cmd b{font-family:var(--font-display);font-size:15px}
 .cmd small{color:var(--muted);font-weight:400;font-size:12px}
 .hello{font-family:var(--font-display)}
@@ -154,7 +153,7 @@ details summary{font-family:var(--font-display)}
 <header><div class="wrap top">
   <div class="brand">Vector <b>Hub</b><small id="botname">—</small></div>
   <span class="pill" id="status" role="status"><span class="dot"></span><span>Cargando…</span></span>
-  <button class="btn" id="reconbtn" hidden style="padding:4px 12px;font-size:13px">↻ Reconectar</button>
+  <button class="btn" id="reconbtn" hidden style="padding:4px 12px;font-size:13px">Reconectar</button>
   <div class="tabs" role="tablist" aria-label="Secciones">
     <button role="tab" id="tabbtn-robot" aria-controls="tab-robot" aria-selected="true" data-tab="robot">Robot</button>
     <button role="tab" id="tabbtn-proyecto" aria-controls="tab-proyecto" aria-selected="false" data-tab="proyecto">Proyecto</button>
@@ -179,8 +178,8 @@ details summary{font-family:var(--font-display)}
         <ol class="steps" id="reconsteps" style="margin:0"></ol>
       </div>
       <div class="row" style="margin:-4px 0 14px">
-        <button class="btn" id="sleepbtn" title="Vector no se puede apagar a distancia: se duerme y despierta con «Hey Vector» o tocándolo">⏻ Dormir</button>
-        <button class="btn" data-cmd="intent_system_charger">🔌 Ir a la base</button>
+        <button class="btn" id="sleepbtn" title="Vector no se puede apagar a distancia: se duerme y despierta con «Hey Vector» o tocándolo">Dormir</button>
+        <button class="btn" data-cmd="intent_system_charger">Ir a la base</button>
         <span class="note" style="margin:0">Apagarlo del todo solo se puede con el botón de la espalda (mantener pulsado).</span>
       </div>
       <div class="grid tiles">
@@ -241,7 +240,7 @@ details summary{font-family:var(--font-display)}
       <div class="rccol" style="min-width:170px">
         <label class="k" for="speed">Velocidad: <b id="speedv">100</b> mm/s</label>
         <input type="range" id="speed" min="40" max="200" step="20" value="100" style="min-width:0">
-        <button class="btn" id="rcsnap">📷 Captura</button>
+        <button class="btn" id="rcsnap">Captura</button>
       </div>
     </div>
     <div class="note">Mantén pulsado para moverlo; al soltar se para. Teclado: flechas o WASD (ruedas), R/F (cabeza), T/G (brazo), espacio (parar). Al terminar pulsa «Modo libre».</div>
@@ -376,8 +375,8 @@ function batteryWarn(pct, enBase) {
   if (!el) { el = document.createElement("div"); el.id = "batwarn"; el.className = "card"; el.setAttribute("role", "alert");
     el.style.cssText = "border-color:var(--crit);margin-bottom:12px;padding:12px 14px"; $("#reconpanel").before(el); }
   el.hidden = pct >= 20;
-  el.innerHTML = enBase ? `🔋 <b>Batería baja (${pct} %)</b>: está cargando. Déjalo en la base un buen rato antes de usarlo.`
-    : `🪫 <b>Batería baja (${pct} %)</b>: llévalo a la base o se apagará.`;
+  el.innerHTML = enBase ? `<b>Batería baja (${pct} %)</b>: está cargando. Déjalo en la base un buen rato antes de usarlo.`
+    : `<b>Batería baja (${pct} %)</b>: llévalo a la base o se apagará.`;
 }
 
 /* ---------- Cara animada (ojos) ---------- */
@@ -505,7 +504,7 @@ $("#reconbtn").onclick = async () => {
       `<li>${ok ? "✓" : "✕"} <b>${esc(paso)}</b>: ${esc(msg)}</li>`).join("");
     if (r.ok) { setStatus("ok", "En línea"); await loadTelemetria(); }
   } catch (e) { $("#reconsteps").innerHTML = `<li>✕ La web no responde: ${esc(e.message)}</li>`; }
-  b.disabled = false; b.textContent = "↻ Reconectar";
+  b.disabled = false; b.textContent = "Reconectar";
 };
 $("#reconclose").onclick = () => $("#reconpanel").hidden = true;
 
@@ -689,7 +688,7 @@ $("#statsbtn").onclick = async () => {
 $("#facesbtn").onclick = async () => {
   try {
     const f = await sdk("get_faces");
-    $("#faces").innerHTML = f && f.length ? f.map((x) => `<div>👤 ${esc(x.name)} <span style="color:var(--muted)">#${x.face_id}</span></div>`).join("")
+    $("#faces").innerHTML = f && f.length ? f.map((x) => `<div>${esc(x.name)} <span style="color:var(--muted)">#${x.face_id}</span></div>`).join("")
       : "Aún no conoce a nadie. Di: «Hey Vector, me llamo …».";
   } catch (e) { $("#faces").textContent = "No se pudo leer: " + e.message; }
 };
@@ -767,21 +766,21 @@ $("#vol").onchange = async (e) => {
 
 /* ---------- Comandos (app intents que acepta el firmware: user_intent_map.json) ---------- */
 const CMDS = [
-  ["🎲", "Explorar", "Se pone a curiosear por la zona", "explore_start"],
-  ["🏃", "Ven aquí", "Te busca y viene hacia ti", "intent_imperative_come"],
-  ["👀", "Mírame", "Busca tu cara y te mira", "intent_imperative_lookatme"],
-  ["👉", "Mira por allí", "Gira y mira hacia otro lado", "intent_imperative_lookoverthere"],
-  ["💃", "Baila", "Baila (mejor con música)", "intent_imperative_dance"],
-  ["🙋", "¿Quién soy?", "Intenta reconocerte y decir tu nombre", "intent_names_ask"],
-  ["🧊", "Busca el cubo", "Busca su cubo con la mirada", "intent_imperative_findcube"],
-  ["🫳", "Trae el cubo", "Va a por el cubo y lo levanta", "intent_imperative_fetchcube"],
-  ["🔌", "Ir a la base", "Vuelve a su cargador", "intent_system_charger"],
-  ["🤫", "Silencio", "Deja de hacer ruido un rato", "intent_imperative_quiet"],
-  ["😴", "Dormir", "Se va a dormir (no se apaga)", "intent_system_sleep"],
+  ["Explorar", "Se pone a curiosear por la zona", "explore_start"],
+  ["Ven aquí", "Te busca y viene hacia ti", "intent_imperative_come"],
+  ["Mírame", "Busca tu cara y te mira", "intent_imperative_lookatme"],
+  ["Mira por allí", "Gira y mira hacia otro lado", "intent_imperative_lookoverthere"],
+  ["Baila", "Baila (mejor con música)", "intent_imperative_dance"],
+  ["¿Quién soy?", "Intenta reconocerte y decir tu nombre", "intent_names_ask"],
+  ["Busca el cubo", "Busca su cubo con la mirada", "intent_imperative_findcube"],
+  ["Trae el cubo", "Va a por el cubo y lo levanta", "intent_imperative_fetchcube"],
+  ["Ir a la base", "Vuelve a su cargador", "intent_system_charger"],
+  ["Silencio", "Deja de hacer ruido un rato", "intent_imperative_quiet"],
+  ["Dormir", "Se va a dormir (no se apaga)", "intent_system_sleep"],
 ];
-$("#cmds").innerHTML = CMDS.map(([i, n, d, intent]) =>
-  `<button class="btn cmd" data-cmd="${intent}"><span class="i" aria-hidden="true">${i}</span><b>${n}</b><small>${d}</small></button>`).join("") +
-  `<button class="btn cmd" data-act="wake"><span class="i" aria-hidden="true">👂</span><b>Escúchame</b><small>Como decir «Hey Vector»: luego háblale</small></button>`;
+$("#cmds").innerHTML = CMDS.map(([n, d, intent]) =>
+  `<button class="btn cmd" data-cmd="${intent}"><b>${n}</b><small>${d}</small></button>`).join("") +
+  `<button class="btn cmd" data-act="wake"><b>Escúchame</b><small>Como decir «Hey Vector»: luego háblale</small></button>`;
 async function runCmd(intent, label) {
   if (!SERIAL) return $("#ctrlmsg").textContent = "Sin robot registrado todavía.";
   if (manual) return $("#ctrlmsg").textContent = "Estás en control manual: pulsa «Modo libre» para que pueda obedecer.";
@@ -795,7 +794,7 @@ $('#cmds [data-act="wake"]').onclick = async () => {
   try { await ACTS.wake(); $("#ctrlmsg").textContent = "Escuchando: háblale ahora ✓"; } catch (e) { $("#ctrlmsg").textContent = "Error: " + e.message; }
 };
 document.querySelectorAll("[data-cmd]").forEach((b) => b.onclick = () =>
-  runCmd(b.dataset.cmd, (CMDS.find((c) => c[3] === b.dataset.cmd) || [, b.textContent.trim()])[1]));
+  runCmd(b.dataset.cmd, (CMDS.find((c) => c[2] === b.dataset.cmd) || [b.textContent.trim()])[0]));
 $("#sleepbtn").onclick = async () => {
   if (!confirm("¿Mandar a Vector a dormir? Despertará con «Hey Vector» o al tocarlo.")) return;
   await runCmd("intent_system_sleep", "Dormir");
@@ -946,7 +945,7 @@ async function loadVoz() {
 function drawVoz() {
   const rows = voz.filter((e) => vozFiltro === "todas" || (vozFiltro === "ok") === isOk(e)).slice(-200).reverse();
   $("#voztable").innerHTML = `<tr><th>Hora</th><th>Lo que oyó</th><th>Resultado</th></tr>` + (rows.map((e) => e.tipo === "ia"
-    ? `<tr><td>${fmtT(e.t)}</td><td colspan="2">🤖 Respuesta IA: ${esc(e.texto)}</td></tr>`
+    ? `<tr><td>${fmtT(e.t)}</td><td colspan="2">Respuesta IA: ${esc(e.texto)}</td></tr>`
     : `<tr><td style="white-space:nowrap">${fmtT(e.t)}</td><td>${e.texto ? "«" + esc(e.texto) + "»" : '<span class="empty">(sin audio)</span>'}</td>
        <td>${isOk(e) ? "✓ " : "✕ "}${esc(intentName(e.intent))}</td></tr>`).join("")
     || `<tr><td colspan="3" class="empty">Sin interacciones todavía. Di «Hey Vector, ¿qué hora es?».</td></tr>`);
