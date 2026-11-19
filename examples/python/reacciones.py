@@ -55,12 +55,27 @@ def al_ver_cara(robot, event_type, event, *args):
         pendientes.put(random.choice(SONRISA))
 
 
-def decir(robot, texto, intentos=2):
-    # Al acariciarlo, Vector hace su propia reacción (ronroneo) y say_text falla con
-    # «Failed to say text» mientras dura: se espera un poco y se reintenta una vez.
+def esperar_sin_tocar(robot, quieto=0.5, maximo=8):
+    """Espera a que le quiten la mano de encima (con un margen), como mucho `maximo` segundos."""
+    fin, libre_desde = time.time() + maximo, None
+    while time.time() < fin:
+        lectura = robot.touch.last_sensor_reading
+        if lectura and lectura.is_being_touched:
+            libre_desde = None
+        else:
+            libre_desde = libre_desde or time.time()
+            if time.time() - libre_desde >= quieto:
+                return
+        time.sleep(0.1)
+
+
+def decir(robot, texto, intentos=3, prioridad=ControlPriorityLevel.DEFAULT_PRIORITY):
+    # Al acariciarlo, Vector hace su propia reacción (ronroneo) que ocupa la voz: say_text falla con
+    # «Failed to say text» aun reintentando a los 2,5 s (probado). Para las caricias se pide prioridad
+    # alta (interrumpe sus comportamientos, como el control remoto) y se reintenta.
     for i in range(intentos):
         try:
-            robot.conn.request_control(ControlPriorityLevel.DEFAULT_PRIORITY, timeout=5)
+            robot.conn.request_control(prioridad, timeout=5)
             robot.behavior.say_text(texto)
             return
         except Exception as e:  # p. ej. ocupado con su propia animación, o la web tiene el control
@@ -71,7 +86,7 @@ def decir(robot, texto, intentos=2):
             except Exception:
                 pass
         if i + 1 < intentos:
-            time.sleep(2.5)
+            time.sleep(1.5)
     log(f"No he podido hablar: {error}")
 
 
@@ -88,8 +103,12 @@ def main():
                 if lectura and lectura.is_being_touched:
                     tocando_desde = tocando_desde or time.time()
                     if time.time() - tocando_desde >= CARICIA_MIN and toca("caricia", ESPERA_CARICIA):
-                        log("Caricia")
-                        pendientes.put(random.choice(CARICIAS))
+                        log("Caricia (hablará al soltarlo)")
+                        texto = random.choice(CARICIAS)
+                        esperar_sin_tocar(robot)
+                        log(f"Dice: {texto}")
+                        decir(robot, texto, prioridad=ControlPriorityLevel.OVERRIDE_BEHAVIORS_PRIORITY)
+                        tocando_desde = None
                 else:
                     tocando_desde = None
                 try:
