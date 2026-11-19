@@ -13,7 +13,7 @@
   --page:#050506; --surface:#0d0e10; --card:#121316; --card2:#0c0d0f; --line:#24262b; --grid:#1d1f23;
   --text:#ececea; --text2:#b4b5b0; --muted:#7d7e79;
   --eye:#2ff59a; --eye-glow:rgba(47,245,154,.55); --gold:#d6b46a;
-  --series:#2ff59a; --series-soft:#0f3d2a; --off:#1c1d20;
+  --series:#2ff59a; --off:#1c1d20;
   --good:#2ff59a; --warn:#fab219; --crit:#ff5a5a; --good-text:#5ff3b0; --crit-text:#ff8a8a;
   --radius:18px; --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 10px 30px rgba(0,0,0,.45);
   --font-display:"Quicksand",system-ui,sans-serif;
@@ -331,7 +331,7 @@ details summary{font-family:var(--font-display)}
 
   <section id="telemetria" class="card">
     <div class="row" style="margin-bottom:8px">
-      <h2 style="margin:0" id="charttitle">Voltaje de batería</h2><span class="spacer"></span>
+      <h2 style="margin:0">Batería (%)</h2><span class="spacer"></span>
       <div class="seg" role="group" aria-label="Periodo">
         <button data-h="6">6 h</button><button data-h="24" aria-pressed="true">24 h</button><button data-h="168">7 días</button>
       </div>
@@ -393,7 +393,7 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtT = (t) => new Date(t * 1000).toLocaleString("es-ES", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"});
 const LEVEL = {0:"Desconocido", 1:"Baja", 2:"Normal", 3:"Llena"};
-let SERIAL = null, horas = 24, samples = [];
+let SERIAL = null, BOT = null, horas = 24, samples = [];
 
 async function api(path) {
   const r = await fetch(path, {cache: "no-store"});
@@ -402,6 +402,7 @@ async function api(path) {
   try { return JSON.parse(txt); } catch { return txt; }
 }
 const sdk = (ep, params = {}) => api(`/api-sdk/${ep}?` + new URLSearchParams({serial: SERIAL, ...params}));
+const sinRobot = (sel) => { if (SERIAL) return false; $(sel).textContent = "Sin robot registrado todavía."; return true; };
 
 function setStatus(kind, text) {
   const colors = {ok:"var(--good)", off:"var(--crit)", wp:"var(--warn)"};
@@ -428,9 +429,10 @@ function batteryPct(v, cargando) {
 //  - en la base, sin cargar y nivel 3 = carga terminada: el firmware envía un voltaje congelado
 //    (3,557422 V idéntico durante 25 min), así que es 100 %, no lo que diga ese voltaje;
 //  - fuera de la base suele dar 0 V y un «nivel 3» falso: sin dato.
+const cargaCompleta = (s) => s.en_base && !s.cargando && s.nivel === 3;
 function pctOf(s) {
   if (!s || !s.online) return null;
-  if (s.en_base && !s.cargando && s.nivel === 3) return 100;
+  if (cargaCompleta(s)) return 100;
   if (s.voltios > 0) return batteryPct(s.voltios, s.cargando);
   return null;
 }
@@ -592,9 +594,7 @@ async function loadProyecto() {
   const p = await api("/proyecto");
   const r = p.robot;
   // nº de serie e IP reales salen de wire-pod (el JSON del repo solo lleva marcadores)
-  const live = await api("/api-sdk/get_sdk_info").catch(() => null);
-  const bot = live && live.robots && live.robots[0];
-  if (bot) { r.serie = bot.esn; r.ip = bot.ip_address; }
+  if (BOT) { r.serie = BOT.esn; r.ip = BOT.ip_address; }
   $("#botname").textContent = r.nombre;
   const rows = [["Nombre", r.nombre], ["Nº de serie", r.serie], ["Firmware", r.firmware], ["Origen", r.firmware_origen],
     ["Hardware", r.hardware], ["Red", r.red], ["IP registrada", r.ip], ["Cuenta", r.estado_cuenta], ["Servidor", r.servidor], ["Voz", r.voz]];
@@ -624,21 +624,23 @@ async function loadProyecto() {
 }
 
 /* ---------- Telemetría ---------- */
+let pctPorMuestra = new Map();  // muestra -> % estimado (calculado una vez por carga)
 async function loadTelemetria() {
-  try { samples = await api("/telemetria?horas=" + horas); } catch { samples = []; }
-  const last = samples[samples.length - 1];
+  // una sola descarga: el periodo del gráfico, y al menos 24 h para saber cuándo salió de la base
+  let hist;
+  try { hist = await api("/telemetria?horas=" + Math.max(horas, 24)); } catch { hist = []; }
+  const est = estimarSerie(hist);
+  pctPorMuestra = new Map(hist.map((s, i) => [s, est[i]]));
+  const desde = Date.now() / 1000 - horas * 3600;
+  samples = hist.filter((s) => s.t >= desde);
+  const last = hist[hist.length - 1];
   if (!last) { setStatus("wp", "Sin datos aún"); return; }
   SERIAL = last.esn || SERIAL;
   $("#updated").textContent = "· última muestra " + fmtT(last.t);
   if (!last.wirepod) setStatus("wp", "wire-pod apagado");
   else if (!last.online) setStatus("off", "Robot sin conexión");
   else setStatus("ok", "En línea");
-  const lastOn = [...samples].reverse().find((s) => s.online);
-  // % solo a partir del voltaje: fuera de la base este firmware da 0 V y un «nivel 3» que no es fiable
-  // (se ha apagado varias veces mientras decía «llena»). Se usa la última lectura con voltaje.
-  // la estimación necesita la historia (cuándo salió de la base): se calcula sobre la serie completa de 24 h
-  const hist = samples.length && horas >= 24 ? samples : await api("/telemetria?horas=24").catch(() => samples);
-  const est = estimarSerie(hist);
+  const lastOn = [...hist].reverse().find((s) => s.online);
   let iV = est.length - 1;
   while (iV >= 0 && est[iV] === null) iV--;
   const lastV = iV >= 0 ? hist[iV] : null;
@@ -646,7 +648,7 @@ async function loadTelemetria() {
     const pct = est[iV];
     const ageMin = Math.round((Date.now() / 1000 - lastV.t) / 60);
     const fresh = lastOn && lastOn.t === lastV.t;
-    const full = lastV.en_base && !lastV.cargando && lastV.nivel === 3;
+    const full = cargaCompleta(lastV);
     const fuera = !lastV.en_base;
     $("#t-bat").innerHTML = `${fuera ? "≈ " : ""}${pct} %<div class="bar" style="margin-top:6px"><i style="width:${pct}%;${pct < 20 ? "background:var(--crit);box-shadow:none" : ""}"></i></div>`;
     $("#t-bat-s").textContent = (full ? "Carga completa · en la base"
@@ -662,7 +664,7 @@ async function loadTelemetria() {
     $("#t-chg").textContent = lastOn.cargando ? "Cargando" : lastOn.en_base ? "En la base" : "Fuera de la base";
     $("#t-chg-s").textContent = lastOn.cubo_voltios ? `Cubo: ${lastOn.cubo_voltios.toFixed(2)} V` : "Cubo: sin datos";
   }
-  const day = samples.filter((s) => s.t >= Date.now() / 1000 - 86400);
+  const day = hist.filter((s) => s.t >= Date.now() / 1000 - 86400);
   if (day.length) {
     const up = Math.round(day.filter((s) => s.online).length / day.length * 100);
     $("#t-up").textContent = up + " %";
@@ -678,11 +680,8 @@ function drawChart() {
   const svg = $("#chart"), W = svg.clientWidth || 800, H = 240, m = {l:44, r:12, t:12, b:26};
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const t1 = Date.now() / 1000, t0 = t1 - horas * 3600;
-  // % de batería estimado por voltaje; solo muestras con voltaje (el «nivel» del robot no es fiable)
-  const estMap = new Map(estimarSerie(samples).map((p, i) => [samples[i], p]));
-  const val = (s) => estMap.get(s);
-  const on = samples.filter((s) => val(s) !== null && val(s) !== undefined);
-  $("#charttitle").textContent = "Batería (%)";
+  const val = (s) => pctPorMuestra.get(s);  // estimado en loadTelemetria con la historia completa
+  const on = samples.filter((s) => val(s) != null);
   const vmin = 0, vmax = 100;
   const x = (t) => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
   const y = (v) => m.t + (vmax - v) / (vmax - vmin) * (H - m.t - m.b);
@@ -725,7 +724,7 @@ function drawChart() {
     $("#xh").setAttribute("x1", cx); $("#xh").setAttribute("x2", cx); $("#xh").setAttribute("visibility", "visible");
     $("#xd").setAttribute("cx", cx); $("#xd").setAttribute("cy", cy); $("#xd").setAttribute("visibility", "visible");
     const tip = $("#tip");
-    tip.innerHTML = `${fmtT(s.t)} · <b>${val(s)} %</b> (${!s.en_base ? "estimado por tiempo" : !s.cargando && s.nivel === 3 ? "carga completa" : s.voltios.toFixed(2) + " V"}) ·${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
+    tip.innerHTML = `${fmtT(s.t)} · <b>${val(s)} %</b> (${!s.en_base ? "estimado por tiempo" : cargaCompleta(s) ? "carga completa" : s.voltios.toFixed(2) + " V"}) · ${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
     tip.style.left = (cx * r.width / W) + "px"; tip.style.top = (cy * r.height / H) + "px"; tip.style.display = "block";
   };
   svg.onmouseleave = () => { $("#tip").style.display = "none"; $("#xh")?.setAttribute("visibility", "hidden"); $("#xd")?.setAttribute("visibility", "hidden"); };
@@ -818,7 +817,7 @@ function renderSay() {
   $("#sayhist").innerHTML = h.length ? "Recientes: " + h.map((t) => `<a href="#" data-say="${esc(t)}" style="color:var(--text2)">${esc(t)}</a>`).join(" · ") : "";
 }
 async function say(t) {
-  if (!SERIAL) { $("#saymsg").textContent = "Sin robot registrado todavía."; return; }
+  if (sinRobot("#saymsg")) return;
   t = paraVoz(t);
   if (!t) { $("#saymsg").textContent = "Escribe una frase."; return; }
   $("#saymsg").textContent = `Diciendo: «${t}»…`;
@@ -841,7 +840,7 @@ const ACTS = {
   wake: () => sdk("trigger_wake_word"),
 };
 document.querySelectorAll("[data-act]").forEach((b) => b.onclick = async () => {
-  if (!SERIAL) return $("#ctrlmsg").textContent = "Sin robot registrado todavía.";
+  if (sinRobot("#ctrlmsg")) return;
   b.disabled = true; $("#ctrlmsg").textContent = "Enviando…";
   try { await ACTS[b.dataset.act](); $("#ctrlmsg").textContent = "Hecho ✓"; }
   catch (e) { $("#ctrlmsg").textContent = "Error: " + e.message; }
@@ -871,7 +870,7 @@ $("#cmds").innerHTML = CMDS.map(([n, d, intent]) =>
   `<button class="btn cmd" data-cmd="${intent}"><b>${n}</b><small>${d}</small></button>`).join("") +
   `<button class="btn cmd" data-act="wake"><b>Escúchame</b><small>Como decir «Hey Vector»: luego háblale</small></button>`;
 async function runCmd(intent, label) {
-  if (!SERIAL) return $("#ctrlmsg").textContent = "Sin robot registrado todavía.";
+  if (sinRobot("#ctrlmsg")) return;
   if (manual) return $("#ctrlmsg").textContent = "Estás en control manual: pulsa «Modo libre» para que pueda obedecer.";
   $("#ctrlmsg").textContent = `Enviando «${label}»…`;
   try { await sdk("cloud_intent", {intent}); $("#ctrlmsg").textContent = `«${label}» enviado ✓`; emote("happy", 1000); }
@@ -879,7 +878,7 @@ async function runCmd(intent, label) {
 }
 // este botón se crea después del enlace genérico de [data-act]: se le asigna aquí
 $('#cmds [data-act="wake"]').onclick = async () => {
-  if (!SERIAL) return $("#ctrlmsg").textContent = "Sin robot registrado todavía.";
+  if (sinRobot("#ctrlmsg")) return;
   try { await ACTS.wake(); $("#ctrlmsg").textContent = "Escuchando: háblale ahora ✓"; } catch (e) { $("#ctrlmsg").textContent = "Error: " + e.message; }
 };
 document.querySelectorAll("[data-cmd]").forEach((b) => b.onclick = () =>
@@ -969,7 +968,7 @@ function camOff(msg = "") {
 }
 $("#cambtn").onclick = () => {
   if ($("#cambtn").getAttribute("aria-pressed") === "true") return camOff();
-  if (!SERIAL) return $("#cammsg").textContent = "Sin robot registrado todavía.";
+  if (sinRobot("#cammsg")) return;
   const img = $("#cam");
   $("#cammsg").textContent = "Conectando con la cámara…";
   img.onload = () => { $("#cammsg").textContent = "En directo"; $("#snapbtn").disabled = false; face.classList.add("focus"); };
@@ -998,7 +997,7 @@ function setManual(on) {
     : `<span class="dot" style="background:var(--good)"></span><span>Modo libre</span>`;
 }
 $("#rcbtn").onclick = async () => {
-  if (!SERIAL) return $("#cammsg").textContent = "Sin robot registrado todavía.";
+  if (sinRobot("#cammsg")) return;
   const b = $("#rcbtn"); b.disabled = true;
   try {
     if (!manual) {
@@ -1115,7 +1114,7 @@ document.querySelectorAll("[data-vf]").forEach((b) => b.onclick = () => {
 /* ---------- Arranque ---------- */
 (async () => {
   tabFromHash();
-  try { const info = await api("/api-sdk/get_sdk_info"); SERIAL = info.robots[0].esn; } catch { /* wire-pod apagado */ }
+  try { BOT = (await api("/api-sdk/get_sdk_info")).robots[0]; SERIAL = BOT.esn; } catch { /* wire-pod apagado */ }
   loadEyes();
   await loadProyecto().catch((e) => console.error(e));
   await loadTelemetria();
