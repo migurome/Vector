@@ -8,6 +8,7 @@ Variables opcionales: WIREPOD=http://localhost:8080  PORT=8090  INTERVALO=60
 """
 import json
 import os
+import re
 import threading
 import time
 import urllib.error
@@ -76,6 +77,62 @@ def registrador():
         time.sleep(INTERVALO)
 
 
+VOZ = DATA / "voz.jsonl"
+# wire-pod solo guarda en memoria las 50 últimas líneas de su log de interfaz: las copiamos a disco
+RE_INTENT = re.compile(r"^(\d{4}\.\d\d\.\d\d \d\d:\d\d:\d\d): Intent matched: (\S+), transcribed text: '(.*)', device: (\S+)$")
+RE_LLM = re.compile(r"^(\d{4}\.\d\d\.\d\d \d\d:\d\d:\d\d): LLM response for (\S+): (.*)$")
+
+
+def parse_voz(linea):
+    """Convierte una línea del log de wire-pod en un evento, o None si no es de voz."""
+    if m := RE_INTENT.match(linea):
+        fecha, intent, texto, _ = m.groups()
+        ev = {"tipo": "orden", "intent": intent, "texto": texto}
+    elif m := RE_LLM.match(linea):
+        fecha, _, texto = m.groups()
+        ev = {"tipo": "ia", "texto": texto}
+    else:
+        return None
+    ev["t"] = int(time.mktime(time.strptime(fecha, "%Y.%m.%d %H:%M:%S")))
+    ev["raw"] = linea  # clave de deduplicado (el buffer de wire-pod se repite en cada lectura)
+    return ev
+
+
+def registrador_voz():
+    vistos = set()
+    if VOZ.exists():
+        for ln in VOZ.read_text(encoding="utf-8").splitlines():
+            try:
+                vistos.add(json.loads(ln)["raw"])
+            except (ValueError, KeyError):
+                pass
+    while True:
+        st, body, _ = wirepod("/api/get_logs", 5)
+        if st == 200:
+            nuevos = [ev for ln in body.decode("utf-8", "replace").splitlines()
+                      if (ev := parse_voz(ln.strip())) and ev["raw"] not in vistos]
+            if nuevos:
+                with VOZ.open("a", encoding="utf-8") as f:
+                    for ev in nuevos:
+                        vistos.add(ev["raw"])
+                        f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+        time.sleep(10)
+
+
+def leer_voz(n):
+    if not VOZ.exists():
+        return []
+    out = []
+    for ln in VOZ.read_text(encoding="utf-8").splitlines()[-n:]:
+        try:
+            ev = json.loads(ln)
+            ev.pop("raw", None)
+            out.append(ev)
+        except ValueError:
+            continue
+    return out
+
+
 def leer_telemetria(horas):
     if not TELEMETRIA.exists():
         return []
@@ -134,6 +191,10 @@ class Handler(SimpleHTTPRequestHandler):
             from urllib.parse import parse_qs, urlparse
             horas = float(parse_qs(urlparse(self.path).query).get("horas", ["24"])[0])
             return self.enviar(200, json.dumps(leer_telemetria(horas)).encode())
+        if self.path.startswith("/voz"):
+            from urllib.parse import parse_qs, urlparse
+            n = int(parse_qs(urlparse(self.path).query).get("n", ["500"])[0])
+            return self.enviar(200, json.dumps(leer_voz(n), ensure_ascii=False).encode())
         if self.path == "/proyecto":
             return self.enviar(200, (DATA / "proyecto.json").read_bytes())
         return super().do_GET()
@@ -141,5 +202,6 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     threading.Thread(target=registrador, daemon=True).start()
+    threading.Thread(target=registrador_voz, daemon=True).start()
     print(f"Vector Hub en http://localhost:{PORT}  (wire-pod: {WIREPOD})")
     ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()

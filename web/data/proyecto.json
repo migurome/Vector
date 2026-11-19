@@ -5,7 +5,7 @@
     "firmware": "2.0.1.6086ep",
     "firmware_origen": "Fábrica Anki (protocolo BLE RTS v2, pantalla anki.com/v)",
     "hardware": "Vector 1.0 (Anki) — probable por el firmware de fábrica",
-    "red": "MI-WIFI",
+    "red": "Wi-Fi doméstica (2,4 GHz)",
     "ip": "<IP del robot>",
     "estado_cuenta": "AuthorizedAsSecondary en wire-pod",
     "servidor": "wire-pod v1.2.18 en el PC (<IP del PC>:8080)",
@@ -55,7 +55,9 @@
     {"fecha": "2026-11-19", "titulo": "Control remoto",
      "texto": "Junto a la cámara: «Tomar control» (wire-pod mantiene el control hasta liberarlo), cruceta de ruedas, cabeza y brazo con mantener pulsado, velocidad 40–200 mm/s, teclado (flechas/WASD, R/F, T/G, espacio) y captura. «Modo libre» devuelve la autonomía. Seguridad: se para al soltar, al perder el foco la pestaña y se libera al cerrar la web."},
     {"fecha": "2026-11-19", "titulo": "SDK de Python funcionando",
-     "texto": "Python 3.12 junto al 3.14 y entorno .venv. El asistente oficial fallaba («cert does not exist»: wire-pod no tenía el certificado de DDL); scripts/configurar_sdk.py lo lee del propio robot por TLS. hola_vector.py: conecta, toma control, habla, mueve y hace foto. pantalla.py: imágenes y GIF en la cara (184×96)."}
+     "texto": "Python 3.12 junto al 3.14 y entorno .venv. El asistente oficial fallaba («cert does not exist»: wire-pod no tenía el certificado de DDL); scripts/configurar_sdk.py lo lee del propio robot por TLS. hola_vector.py: conecta, toma control, habla, mueve y hace foto. pantalla.py: imágenes y GIF en la cara (184×96)."},
+    {"fecha": "2026-11-19", "titulo": "Registro de «Hey Vector», guías y preguntas",
+     "texto": "wire-pod solo guarda en memoria las 50 últimas órdenes (/api/get_logs); server.py las copia cada 10 s a web/data/voz.jsonl (fuera de Git). La web muestra cuántas hay, % entendidas, órdenes más usadas y la lista filtrable. Primer dato: de 7 activaciones solo 1 era una orden real («qué hora es»); el resto, frases sueltas de conversaciones. También: secciones Guías y Preguntas y respuestas."}
   ],
   "protocolo_wifi": [
     "Conecta el PC a la red nueva y comprueba en Windows que es «Red privada» (Configuración → Red → propiedades). Si es pública, el firewall puede bloquear a wire-pod.",
@@ -67,5 +69,45 @@
     "Comprueba que sale «wifi state: online». En 1–2 minutos wire-pod anota la nueva IP solo (vars.go: RecordBot).",
     "Si usas el SDK de Python, actualiza su IP: .venv\\Scripts\\python.exe scripts\\configurar_sdk.py",
     "Verifica en esta web que el estado pasa a «En línea». Prueba: «Hey Vector, ¿qué hora es?»."
+  ],
+  "guias": [
+    {"titulo": "SDK de Python: puesta en marcha",
+     "intro": "Programar a Vector desde el PC. Ya está instalado y configurado en este equipo; estos pasos sirven para repetirlo en otro.",
+     "pasos": [
+       "Instalar Python 3.12 (el SDK no funciona con 3.13+): winget install Python.Python.3.12 --scope user",
+       "Crear el entorno del proyecto: py -3.12 -m venv .venv",
+       "Instalar el SDK de wire-pod: .venv\\Scripts\\python.exe -m pip install -U pip wirepod_vector_sdk",
+       "Configurarlo (robot encendido y wire-pod abierto): .venv\\Scripts\\python.exe scripts\\configurar_sdk.py",
+       "Probarlo: .venv\\Scripts\\python.exe examples\\python\\hola_vector.py"
+     ],
+     "nota": "El asistente oficial (python -m anki_vector.configure) falla con «cert does not exist» porque pide el certificado a wire-pod y este solo lo tiene si lo descargó de DDL. configurar_sdk.py lo lee directamente del robot. Hay que relanzarlo si cambia la IP del robot."},
+    {"titulo": "Ejemplos del SDK",
+     "intro": "Desde la carpeta del proyecto:",
+     "pasos": [
+       ".venv\\Scripts\\python.exe examples\\python\\hola_vector.py — batería, habla, mueve cabeza y brazo y guarda una foto",
+       ".venv\\Scripts\\python.exe examples\\python\\pantalla.py — muestra «¡Hola!» en su cara",
+       ".venv\\Scripts\\python.exe examples\\python\\pantalla.py foto.jpg 8 — una imagen durante 8 segundos",
+       ".venv\\Scripts\\python.exe examples\\python\\pantalla.py animacion.gif 3 — un GIF animado, 3 vueltas"
+     ],
+     "nota": "pantalla.py adapta cualquier imagen a 184×96 sin deformarla (bandas negras si la proporción no coincide)."},
+    {"titulo": "Pendiente para cerrar la Fase 5",
+     "intro": "El 30 % que falta:",
+     "pasos": [
+       "Comportamientos que reaccionan a eventos: saludar por su nombre a quien reconoce, reaccionar a las caricias…",
+       "Llevar la pantalla a esta web: subir una imagen o GIF y que aparezca en su cara."
+     ],
+     "nota": ""}
+  ],
+  "faq": [
+    {"pregunta": "¿Funciona Vector sin el portátil encendido?",
+     "respuesta": "Solo en parte. Sin wire-pod sigue moviéndose, explorando, reconociendo caras, jugando con el cubo y yendo a cargarse, y detecta «Hey Vector»; pero no entiende lo que le dices y la web y el SDK no funcionan. Para tenerlo siempre disponible: wire-pod en un equipo siempre encendido (Raspberry Pi, Fase 6, en standby) copiando la carpeta %APPDATA%\\wire-pod o reautenticando con anki-auth."},
+    {"pregunta": "¿Puede mandar la voz directamente a ChatGPT o Claude?",
+     "respuesta": "No directamente: su firmware solo habla el protocolo de Anki con un servidor fijo (escapepod.local) y no sabe usar claves de API; cambiarlo exige firmware propio (Fase 8). Pero wire-pod ya hace de intermediario: con «Knowledge graph» envía a un LLM lo que no sea un comando conocido y Vector dice la respuesta. Admite OpenAI, Together y servicios compatibles con OpenAI; para Claude haría falta un pequeño puente. Se paga por uso (céntimos al mes con uso normal). Fase 4, por decidir."},
+    {"pregunta": "Si le doy un mapa de la casa, ¿puede recorrerla o saber dónde está?",
+     "respuesta": "No puede cargar un plano. Sabe dónde está respecto a donde empezó (odometría), pero se «pierde» si lo levantan; crea un mini-mapa local de obstáculos (nav_map, alcance ~2 m) y se orienta con marcas impresas (las de su base y cubo, y marcas propias con define_custom_wall). Lo realista: marcas impresas en cada habitación, rutas de patrulla con go_to_pose y la web mostrando en qué zona está. Límites: 30–45 min de batería, umbrales y alfombras, error acumulado y una sola planta. Proyecto para la Fase 7."},
+    {"pregunta": "¿Se pueden mostrar imágenes propias en su cara?",
+     "respuesta": "Sí, sin tocar el firmware: con el SDK (set_screen_with_image_data). Ya funciona con examples/python/pantalla.py (imágenes y GIF a 184×96). Siguiente paso: un cuadro en esta web para subirlas."},
+    {"pregunta": "¿Se pueden sacar sus animaciones y el logo de Anki? ¿Y cambiarlos?",
+     "respuesta": "En parte. En el repositorio os-vector/wire-os-victor están la animación de arranque con el logo (resources/config/engine/animations/boot_anim.raw, fotogramas RGB565; boot_anim_20.raw para el 2.0) y unos 120 iconos PNG (emparejamiento, batería…). Los ojos no son imágenes: se dibujan por código en vic-anim. Cambiar el arranque es posible (si existe /persist/boot_anim.raw lo usa en lugar del de Anki), pero requiere SSH, es decir, robot desbloqueado (Fase 8). Son recursos de Anki/DDL: uso personal sí, no subirlos al repositorio público."}
   ]
 }

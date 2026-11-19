@@ -104,8 +104,8 @@ input{flex:1;min-width:160px}
   <div class="brand">Vector Hub<small id="botname">—</small></div>
   <span class="pill" id="status" role="status"><span class="dot"></span><span>Cargando…</span></span>
   <nav>
-    <a href="#estado">Estado</a><a href="#hablar">Hablar</a><a href="#camara">Cámara</a><a href="#telemetria">Telemetría</a><a href="#vida">Estadísticas</a>
-    <a href="#control">Control</a><a href="#fases">Fases</a><a href="#memoria">Memoria</a><a href="#wifi">Cambio de Wi-Fi</a>
+    <a href="#estado">Estado</a><a href="#hablar">Hablar</a><a href="#camara">Cámara</a><a href="#voz">Voz</a><a href="#telemetria">Telemetría</a><a href="#vida">Estadísticas</a>
+    <a href="#control">Control</a><a href="#fases">Fases</a><a href="#guias">Guías</a><a href="#faq">Preguntas</a><a href="#memoria">Memoria</a><a href="#wifi">Cambio de Wi-Fi</a>
   </nav>
 </div></header>
 
@@ -177,6 +177,21 @@ input{flex:1;min-width:160px}
     </div></div>
   </section>
 
+  <section id="voz" class="card">
+    <div class="row" style="margin-bottom:12px">
+      <h2 style="margin:0">Registro de «Hey Vector»</h2><span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Filtro">
+        <button data-vf="todas" aria-pressed="true">Todas</button><button data-vf="ok">Entendidas</button><button data-vf="ko">No entendidas</button>
+      </div>
+    </div>
+    <div class="grid tiles" id="voztiles" style="margin-bottom:12px"></div>
+    <div class="grid two">
+      <div style="max-height:360px;overflow:auto"><table id="voztable"></table></div>
+      <div><h2 style="font-size:15px">Órdenes más usadas</h2><div id="voztop"></div></div>
+    </div>
+    <div class="note">Se guarda todo lo que wire-pod transcribe mientras esta web está en marcha (wire-pod solo recuerda las 50 últimas). Muchas «no entendidas» con frases sueltas suelen ser conversaciones o la tele que activan la palabra clave.</div>
+  </section>
+
   <section class="grid two">
     <div class="card"><h2>Ficha del robot</h2><dl id="ficha"></dl></div>
     <div class="card"><h2>Avance del proyecto</h2>
@@ -224,6 +239,10 @@ input{flex:1;min-width:160px}
   </section>
 
   <section id="fases" class="card"><h2>Fases del proyecto</h2><div id="phases"></div></section>
+
+  <section id="guias"><h2>Guías</h2><div class="grid two" id="guidelist"></div></section>
+
+  <section id="faq" class="card"><h2>Preguntas y respuestas</h2><div id="faqlist"></div></section>
 
   <section class="grid two">
     <div id="memoria" class="card"><h2>Memoria del proyecto</h2><ul class="timeline" id="timeline"></ul></div>
@@ -276,6 +295,17 @@ async function loadProyecto() {
     `<div class="phase"><span class="id">${f.id}</span><div><b>${esc(f.nombre)}</b>${bar(f.avance)}</div><span class="pc">${f.avance}%</span><span class="d">${esc(f.detalle)}</span></div>`).join("");
   $("#timeline").innerHTML = p.memoria.map((m) =>
     `<li><span class="f">${esc(m.fecha)}</span><b>${esc(m.titulo)}</b><p>${esc(m.texto)}</p></li>`).join("");
+  // comandos (.venv\..., winget, py -3.12) en monoespaciada; el texto tras « — » queda como explicación
+  const cmd = (s) => esc(s).replace(/^((?:\.venv|winget|py |python|node |cd ).*?)( — .*)?$/, (_, c, rest) => `<code>${c}</code>${rest || ""}`)
+    .replace(/: ((?:\.venv|winget|py |python|node ).*)$/, ": <code>$1</code>");
+  $("#guidelist").innerHTML = (p.guias || []).map((g) =>
+    `<div class="card"><h2>${esc(g.titulo)}</h2><p style="margin:0 0 8px;color:var(--text2)">${esc(g.intro)}</p>
+     <ol class="steps">${g.pasos.map((s) => `<li>${cmd(s)}</li>`).join("")}</ol>
+     ${g.nota ? `<div class="note">${esc(g.nota)}</div>` : ""}</div>`).join("");
+  $("#faqlist").innerHTML = (p.faq || []).map((f) =>
+    `<details style="border-bottom:1px solid var(--grid);padding:10px 0">
+       <summary style="cursor:pointer;font-weight:600">${esc(f.pregunta)}</summary>
+       <p style="margin:8px 0 0;color:var(--text2)">${esc(f.respuesta)}</p></details>`).join("");
   $("#wifisteps").innerHTML = p.protocolo_wifi.map((s) => `<li>${esc(s).replace(/(node index\.js.*$|http:\/\/localhost:8080)/g, "<code>$1</code>")}</li>`).join("");
 }
 
@@ -592,12 +622,63 @@ window.addEventListener("beforeunload", () => {
   if (manual) { stopAll(); sdkKeep("release_behavior_control"); } // no dejarlo bloqueado al cerrar la web
 });
 
+/* ---------- Registro de voz ---------- */
+const INTENTS = {
+  intent_clock_time: "Decir la hora", intent_system_unmatched: "No entendido", intent_system_noaudio: "Sin audio",
+  intent_greeting_hello: "Saludo", intent_greeting_goodbye: "Despedida", intent_greeting_goodmorning: "Buenos días",
+  intent_greeting_goodnight: "Buenas noches", intent_weather_extend: "El tiempo", intent_clock_settimer_extend: "Poner temporizador",
+  intent_clock_checktimer: "Consultar temporizador", intent_global_stop_extend: "Parar", intent_imperative_dance: "Bailar",
+  intent_photo_take_extend: "Hacer foto", intent_names_ask: "¿Quién soy?", intent_names_username_extend: "Aprender nombre",
+  intent_imperative_come: "Ven aquí", intent_system_charger: "Ir a cargar", intent_imperative_volumeup: "Subir volumen",
+  intent_imperative_volumedown: "Bajar volumen", intent_imperative_quiet: "Silencio", intent_play_blackjack: "Blackjack",
+  intent_play_rollcube: "Tirar el cubo", intent_play_fistbump: "Choca el puño", intent_imperative_lookatme: "Mírame",
+  intent_imperative_praise: "Felicitar", intent_imperative_scold: "Regañar", intent_imperative_affirmative: "Sí",
+  intent_imperative_negative: "No", intent_knowledge_promptquestion: "Pregunta (IA)", intent_play_specific_extend: "Jugar",
+  intent_explore_start: "Explorar", intent_imperative_turnaround: "Date la vuelta", intent_character_age: "¿Cuántos años tienes?",
+};
+const intentName = (i) => INTENTS[i] || i.replace(/^intent_/, "").replace(/_extend$/, "").replace(/_/g, " ");
+const isOk = (e) => e.tipo === "ia" || !/^intent_system_(unmatched|noaudio)$/.test(e.intent);
+let voz = [], vozFiltro = "todas";
+async function loadVoz() {
+  try { voz = await api("/voz?n=2000"); } catch { return; }
+  const orders = voz.filter((e) => e.tipo === "orden");
+  const day = orders.filter((e) => e.t >= Date.now() / 1000 - 86400);
+  const ok = orders.filter(isOk).length;
+  const tile = (k, v, s) => `<div class="card tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  $("#voztiles").innerHTML =
+    tile("Órdenes registradas", orders.length, `${day.length} en las últimas 24 h`) +
+    tile("Entendidas", orders.length ? Math.round(ok / orders.length * 100) + " %" : "—", `${ok} de ${orders.length}`) +
+    tile("Última", orders.length ? esc(fmtT(orders[orders.length - 1].t)) : "—", orders.length ? "«" + esc(orders[orders.length - 1].texto || "sin audio") + "»" : "sin datos");
+  const counts = {};
+  orders.filter(isOk).forEach((e) => counts[e.intent] = (counts[e.intent] || 0) + 1);
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const max = top.length ? top[0][1] : 1;
+  $("#voztop").innerHTML = top.length ? top.map(([i, n]) =>
+    `<div class="row" style="gap:10px;margin:6px 0;font-size:14px"><span style="flex:1;min-width:0">${esc(intentName(i))}</span>
+     <span style="width:120px"><div class="bar"><i style="width:${n / max * 100}%"></i></div></span><span style="width:28px;text-align:right">${n}</span></div>`).join("")
+    : `<span class="empty">Aún no hay órdenes entendidas.</span>`;
+  drawVoz();
+}
+function drawVoz() {
+  const rows = voz.filter((e) => vozFiltro === "todas" || (vozFiltro === "ok") === isOk(e)).slice(-200).reverse();
+  $("#voztable").innerHTML = `<tr><th>Hora</th><th>Lo que oyó</th><th>Resultado</th></tr>` + (rows.map((e) => e.tipo === "ia"
+    ? `<tr><td>${fmtT(e.t)}</td><td colspan="2">🤖 Respuesta IA: ${esc(e.texto)}</td></tr>`
+    : `<tr><td style="white-space:nowrap">${fmtT(e.t)}</td><td>${e.texto ? "«" + esc(e.texto) + "»" : '<span class="empty">(sin audio)</span>'}</td>
+       <td>${isOk(e) ? "✓ " : "✕ "}${esc(intentName(e.intent))}</td></tr>`).join("")
+    || `<tr><td colspan="3" class="empty">Sin interacciones todavía. Di «Hey Vector, ¿qué hora es?».</td></tr>`);
+}
+document.querySelectorAll("[data-vf]").forEach((b) => b.onclick = () => {
+  document.querySelectorAll("[data-vf]").forEach((o) => o.setAttribute("aria-pressed", o === b));
+  vozFiltro = b.dataset.vf; drawVoz();
+});
+
 /* ---------- Arranque ---------- */
 (async () => {
   try { const info = await api("/api-sdk/get_sdk_info"); SERIAL = info.robots[0].esn; } catch { /* wire-pod apagado */ }
   await loadProyecto().catch((e) => console.error(e));
   await loadTelemetria();
   setInterval(loadTelemetria, 60000);
+  loadVoz(); setInterval(loadVoz, 15000);
 })();
 </script>
 </body>
