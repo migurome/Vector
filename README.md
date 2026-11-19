@@ -24,9 +24,15 @@ Doble clic en **`iniciar_web.bat`** (abre wire-pod si está cerrado, arranca la 
 python web\server.py      # → http://localhost:8090
 ```
 
-Panel local con estado y telemetría del robot (batería, carga, disponibilidad, gráfico de voltaje),
-estadísticas de vida, caras, fotos, control rápido, fases con su % de avance, memoria del proyecto y el
-protocolo de cambio de Wi-Fi. Lee los datos de wire-pod (tiene que estar abierto) y guarda una muestra por
+Panel local con:
+
+- **Estado y telemetría**: en línea / sin conexión, batería (voltaje o nivel), carga, disponibilidad,
+  gráfico histórico con vista en tabla.
+- **Hablar**: Vector dice lo que escribas, con frases rápidas e historial.
+- **Cámara en directo** (MJPEG ~4 fps, 640×360) con **control remoto**: tomar control / modo libre,
+  ruedas, cabeza y brazo (ratón, táctil o teclado), velocidad y capturas.
+- Estadísticas de vida, caras conocidas, fotos del robot y volumen.
+- Fases con su % de avance, memoria del proyecto y protocolo de cambio de Wi-Fi. Lee los datos de wire-pod (tiene que estar abierto) y guarda una muestra por
 minuto en `web/data/telemetria.jsonl`. Las fases y la memoria se editan en `web/data/proyecto.json`.
 
 **Cambio de red Wi-Fi:** [docs/08-cambio-de-wifi.md](docs/08-cambio-de-wifi.md) — en resumen:
@@ -44,6 +50,10 @@ docs/                 Documentación propia en castellano (empieza por aquí)
   06-firmware-y-desbloqueo.md
   07-catalogo-de-recursos.md
 examples/python/      Ejemplos mínimos con el SDK Python
+tools/vector-ble-cli/ Configuración por Bluetooth desde terminal (emparejar, Wi-Fi, OTA, auth)
+web/                  Vector Hub: server.py + static/index.html + data/proyecto.json
+iniciar_web.bat       Arranca wire-pod (si hace falta) y la web
+scripts/              Clonado de repos y diagnóstico Bluetooth
 repos.txt             Lista de repos de referencia (código fuente, SDKs, docs)
 scripts/clone_repos.ps1  Clona/actualiza todos los repos de repos.txt en third_party/
 third_party/          (ignorado por git) copias locales de los repos externos
