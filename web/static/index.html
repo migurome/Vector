@@ -4,132 +4,180 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vector Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* Estética Vector: negro profundo, grafito brillante, ojos verdes que brillan y un toque dorado */
 :root{
-  --page:#f9f9f7; --surface:#fcfcfb; --card:#ffffff; --line:#e4e3de; --grid:#ecebe7;
-  --text:#0b0b0b; --text2:#52514e; --muted:#8a8984;
-  --series:#2a78d6; --series-soft:#cde2fb; --off:#ecebe7;
-  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --good-text:#006300; --crit-text:#a32424;
-  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05);
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --page:#0d0d0d; --surface:#1a1a19; --card:#161615; --line:#2c2c2a; --grid:#262624;
-  --text:#f0efec; --text2:#c3c2b7; --muted:#8d8c86;
-  --series:#3987e5; --series-soft:#1c3a5e; --off:#2a2a28;
-  --good-text:#5fd35f; --crit-text:#f08a8a;
-}}
-:root[data-theme="dark"]{
-  --page:#0d0d0d; --surface:#1a1a19; --card:#161615; --line:#2c2c2a; --grid:#262624;
-  --text:#f0efec; --text2:#c3c2b7; --muted:#8d8c86;
-  --series:#3987e5; --series-soft:#1c3a5e; --off:#2a2a28;
-  --good-text:#5fd35f; --crit-text:#f08a8a;
+  --page:#050506; --surface:#0d0e10; --card:#121316; --card2:#0c0d0f; --line:#24262b; --grid:#1d1f23;
+  --text:#ececea; --text2:#b4b5b0; --muted:#7d7e79;
+  --eye:#2ff59a; --eye-glow:rgba(47,245,154,.55); --gold:#d6b46a;
+  --series:#2ff59a; --series-soft:#0f3d2a; --off:#1c1d20;
+  --good:#2ff59a; --warn:#fab219; --crit:#ff5a5a; --good-text:#5ff3b0; --crit-text:#ff8a8a;
+  --radius:18px; --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 10px 30px rgba(0,0,0,.45);
+  --font-display:"Quicksand",system-ui,sans-serif;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--page);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{position:sticky;top:0;z-index:5;background:var(--page);border-bottom:1px solid var(--line)}
+body{margin:0;color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:radial-gradient(1200px 500px at 70% -10%,rgba(47,245,154,.08),transparent 60%),var(--page);min-height:100vh}
+header{position:sticky;top:0;z-index:5;background:rgba(5,5,6,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-.top{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap}
-.brand{font-weight:700;font-size:18px;letter-spacing:-.01em}
-.brand small{font-weight:400;color:var(--text2);margin-left:6px}
-nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
-nav a{color:var(--text2);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:14px}
-nav a:hover{background:var(--card);color:var(--text)}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600}
-.pill .dot{width:8px;height:8px;border-radius:50%}
-main{padding:20px 0 60px}
-section{margin:0 0 28px;scroll-margin-top:70px}
-h2{font-size:17px;margin:0 0 12px;letter-spacing:-.01em}
-h2 small{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
-.grid{display:grid;gap:12px}
-.tiles{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.top{display:flex;align-items:center;gap:12px;padding:10px 0;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-weight:300;font-size:28px;letter-spacing:.01em;line-height:1;display:flex;align-items:baseline;gap:8px}
+.brand b{font-weight:600;font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold)}
+.brand small{font-family:system-ui,sans-serif;font-weight:400;font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:4px}
+.tabs button{font-family:var(--font-display);font-weight:600;font-size:14px;border:0;background:transparent;color:var(--text2);padding:7px 18px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--eye);color:#04140c;box-shadow:0 0 18px var(--eye-glow)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600}
+.pill .dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px currentColor}
+main{padding:22px 0 70px}
+section{margin:0 0 26px;scroll-margin-top:80px}
+h2{font-family:var(--font-display);font-weight:600;font-size:19px;margin:0 0 12px;letter-spacing:.01em}
+h2 small{font-family:system-ui,sans-serif;font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
+.grid{display:grid;gap:14px}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .two{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);min-width:0}
-.tile .k{color:var(--text2);font-size:13px}
-.tile .v{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:2px 0}
-.tile .s{color:var(--muted);font-size:13px}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}
+.tile .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em}
+.tile .v{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:-.01em;margin:2px 0}
+.tile .s{color:var(--text2);font-size:13px}
 dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:0}
-dt{color:var(--text2)} dd{margin:0;overflow-wrap:anywhere}
+dt{color:var(--muted)} dd{margin:0;overflow-wrap:anywhere}
 .chart{position:relative}
 .chart svg{width:100%;height:240px;display:block}
 .chart .tip{position:absolute;pointer-events:none;background:var(--text);color:var(--page);font-size:12px;padding:6px 8px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);display:none}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{border:0;background:var(--card);color:var(--text2);padding:4px 10px;cursor:pointer;font:inherit;font-size:13px}
-.seg button[aria-pressed="true"]{background:var(--text);color:var(--page)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card2)}
+.seg button{border:0;background:transparent;color:var(--text2);padding:5px 12px;cursor:pointer;font:inherit;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--eye);color:#04140c;font-weight:600}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .spacer{flex:1}
 table{width:100%;border-collapse:collapse;font-size:14px}
-td,th{padding:6px 4px;border-bottom:1px solid var(--grid);text-align:left}
+td,th{padding:7px 4px;border-bottom:1px solid var(--grid);text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
 td.n{text-align:right;font-variant-numeric:tabular-nums}
 .bar{height:8px;background:var(--grid);border-radius:4px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--series);border-radius:4px}
+.bar i{display:block;height:100%;background:var(--eye);border-radius:4px;box-shadow:0 0 10px var(--eye-glow)}
 .phase{display:grid;grid-template-columns:44px 1fr 52px;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--grid)}
 .phase:last-child{border-bottom:0}
-.phase .id{font-weight:700;color:var(--text2)}
+.phase .id{font-family:var(--font-display);font-weight:700;color:var(--gold)}
 .phase .pc{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 .phase .d{grid-column:2/4;color:var(--text2);font-size:13px}
 .timeline{list-style:none;margin:0;padding:0;border-left:2px solid var(--line)}
 .timeline li{position:relative;padding:0 0 16px 18px}
-.timeline li::before{content:"";position:absolute;left:-6px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--series);border:2px solid var(--page)}
+.timeline li::before{content:"";position:absolute;left:-6px;top:6px;width:10px;height:10px;border-radius:3px;background:var(--eye);box-shadow:0 0 8px var(--eye-glow)}
 .timeline .f{color:var(--muted);font-size:12px}
-.timeline b{display:block}
+.timeline b{display:block;font-family:var(--font-display)}
 .timeline p{margin:2px 0 0;color:var(--text2);font-size:14px}
 ol.steps{margin:0;padding-left:22px} ol.steps li{margin:0 0 8px}
-code{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:var(--grid);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
-button.btn,input,select{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;padding:7px 12px}
-button.btn{cursor:pointer;font-weight:600}
-button.btn:hover{border-color:var(--text2)}
-button.btn:disabled{opacity:.5;cursor:not-allowed}
+code{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:#1a1c20;color:#c9f7e3;padding:1px 6px;border-radius:5px;overflow-wrap:anywhere}
+button.btn,input,select{font:inherit;font-size:14px;border:1px solid var(--line);background:#16181b;color:var(--text);border-radius:12px;padding:8px 14px}
+button.btn{cursor:pointer;font-weight:600;transition:border-color .15s,box-shadow .15s,transform .05s}
+button.btn:hover{border-color:var(--eye);box-shadow:0 0 14px rgba(47,245,154,.25)}
+button.btn:active{transform:translateY(1px)}
+button.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;border-color:var(--line)}
+button.primary{background:var(--eye);color:#04140c;border-color:var(--eye)}
 input{flex:1;min-width:160px}
+input:focus,select:focus{outline:none;border-color:var(--eye);box-shadow:0 0 0 3px rgba(47,245,154,.18)}
+input[type=range]{accent-color:var(--eye);padding:0;border:0;background:none}
 .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
-.photos img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in;background:var(--grid)}
+.photos img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:zoom-in;background:var(--grid)}
 .empty{color:var(--muted);font-size:14px}
 .note{color:var(--muted);font-size:13px;margin-top:8px}
 .msg{font-size:13px;color:var(--text2);min-height:1.5em}
-:focus-visible{outline:2px solid var(--series);outline-offset:2px}
+details summary{font-family:var(--font-display)}
+:focus-visible{outline:2px solid var(--eye);outline-offset:2px}
 .rc{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
-.rc[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.rc[aria-disabled="true"]{opacity:.4;pointer-events:none}
 .pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px}
-.pad .btn,.rccol .btn{font-size:20px;padding:0;min-height:48px;touch-action:none;user-select:none}
+.pad .btn,.rccol .btn{font-size:20px;padding:0;min-height:48px;touch-action:none;user-select:none;border-radius:14px}
 .rccol{display:flex;flex-direction:column;gap:6px;min-width:64px}
-.rccol .k{color:var(--text2);font-size:13px}
-.btn.on{background:var(--text);color:var(--page)}
+.rccol .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.1em}
+.btn.on{background:var(--eye);color:#04140c;box-shadow:0 0 18px var(--eye-glow)}
 .camgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:20px;align-items:start}
-@media (max-width:860px){.camgrid{grid-template-columns:1fr}}
 .rccol #rcsnap{font-size:14px;min-height:40px;padding:0 10px}
-@media (max-width:600px){nav{display:none}.two{grid-template-columns:1fr}}
+#quick .btn{border-radius:999px;font-weight:500}
+
+/* ---------- Cara de Vector ---------- */
+.hero{display:grid;grid-template-columns:minmax(280px,440px) 1fr;gap:28px;align-items:center;margin:14px 0 30px}
+.face{position:relative;aspect-ratio:184/96;border-radius:28px;padding:6%;
+  background:radial-gradient(120% 140% at 30% 0%,#26282d 0%,#101113 45%,#050506 100%);
+  border:1px solid #2c2f35;box-shadow:0 0 0 6px #0b0c0e,0 0 0 7px #2a2c31,0 25px 60px rgba(0,0,0,.6),inset 0 2px 0 rgba(255,255,255,.05)}
+.screen{position:relative;width:100%;height:100%;border-radius:14px;background:#000;overflow:hidden;
+  box-shadow:inset 0 0 30px rgba(47,245,154,.06)}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;  /* reflejo del cristal */
+  background:linear-gradient(160deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 35%)}
+.eyes{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:16%;
+  transform:translate(var(--lx,0px),var(--ly,0px));transition:transform .18s ease-out}
+.eye{position:relative;width:24%;height:58%;border-radius:22%;background:var(--eye);
+  box-shadow:0 0 18px var(--eye-glow),0 0 42px rgba(47,245,154,.25);
+  transform-origin:50% 50%;transition:height .25s ease,width .25s ease,border-radius .25s,background .3s,opacity .3s}
+.face.blink .eye{animation:blink .16s ease-in-out}
+@keyframes blink{50%{transform:scaleY(.08)}}
+.eye::after{content:"";position:absolute;left:-12%;right:-12%;bottom:-60%;height:0;border-radius:50%;background:#000;transition:height .25s}
+.face.happy .eye::after{height:85%}                       /* ojos sonrientes ^ ^ */
+.face.sleep .eye{height:7%;border-radius:6px;opacity:.55;box-shadow:0 0 10px var(--eye-glow)}
+.face.off .eye{height:7%;border-radius:6px;background:#3a3d42;box-shadow:none}
+.face.talk .eyes{animation:bob .35s ease-in-out 4}
+@keyframes bob{50%{transform:translate(var(--lx,0px),calc(var(--ly,0px) - 6%)) scale(1.03)}}
+.face.focus .eye{height:44%;width:28%}
+.zzz{position:absolute;right:12%;top:12%;font-family:var(--font-display);font-weight:700;color:var(--eye);opacity:0;pointer-events:none}
+.face.sleep .zzz{animation:zz 2.6s ease-in-out infinite}
+@keyframes zz{0%{opacity:0;transform:translate(0,10px) scale(.7)}40%{opacity:.8}100%{opacity:0;transform:translate(10px,-18px) scale(1.1)}}
+.hello{font-family:var(--font-display)}
+.hello h1{font-weight:300;font-size:clamp(34px,5vw,54px);line-height:1.05;margin:0 0 8px;letter-spacing:.005em}
+.hello h1 em{font-style:normal;color:var(--eye);text-shadow:0 0 22px var(--eye-glow)}
+.hello p{margin:0 0 16px;color:var(--text2);font-size:16px}
+.hello .tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+.hello .tile{padding:14px}
+.hello .tile .v{font-size:22px}
+.subnav{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 20px}
+.subnav a{font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--text2);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--card2)}
+.subnav a:hover{border-color:var(--eye);color:var(--text)}
+@media (max-width:860px){.camgrid,.hero{grid-template-columns:1fr}.hello .tiles{grid-template-columns:1fr 1fr}}
+@media (max-width:600px){.two{grid-template-columns:1fr}.brand{font-size:24px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <header><div class="wrap top">
-  <div class="brand">Vector Hub<small id="botname">—</small></div>
+  <div class="brand">Vector <b>Hub</b><small id="botname">—</small></div>
   <span class="pill" id="status" role="status"><span class="dot"></span><span>Cargando…</span></span>
   <button class="btn" id="reconbtn" hidden style="padding:4px 12px;font-size:13px">↻ Reconectar</button>
-  <nav>
-    <a href="#estado">Estado</a><a href="#hablar">Hablar</a><a href="#camara">Cámara</a><a href="#voz">Voz</a><a href="#telemetria">Telemetría</a><a href="#vida">Estadísticas</a>
-    <a href="#control">Control</a><a href="#fases">Fases</a><a href="#guias">Guías</a><a href="#faq">Preguntas</a><a href="#memoria">Memoria</a><a href="#wifi">Cambio de Wi-Fi</a>
-  </nav>
+  <div class="tabs" role="tablist" aria-label="Secciones">
+    <button role="tab" id="tabbtn-robot" aria-controls="tab-robot" aria-selected="true" data-tab="robot">Robot</button>
+    <button role="tab" id="tabbtn-proyecto" aria-controls="tab-proyecto" aria-selected="false" data-tab="proyecto">Proyecto</button>
+  </div>
 </div></header>
 
 <main class="wrap">
-  <section id="estado">
-    <h2>Estado del robot <small id="updated"></small></h2>
-    <div class="card" id="reconpanel" hidden style="margin-bottom:12px">
-      <div class="row" style="margin-bottom:6px"><b>Reconexión</b><span class="spacer"></span><button class="btn" id="reconclose" style="padding:2px 10px" aria-label="Cerrar">✕</button></div>
-      <ol class="steps" id="reconsteps" style="margin:0"></ol>
+<div id="tab-robot" role="tabpanel" aria-labelledby="tabbtn-robot">
+  <section id="estado" class="hero">
+    <div class="face sleep" id="face" aria-hidden="true">
+      <div class="screen"><div class="eyes"><div class="eye"></div><div class="eye"></div></div><span class="zzz">z</span></div>
     </div>
-    <div class="grid tiles">
-      <div class="card tile"><div class="k">Batería</div><div class="v" id="t-bat">—</div><div class="s" id="t-bat-s">&nbsp;</div></div>
-      <div class="card tile"><div class="k">Carga</div><div class="v" id="t-chg">—</div><div class="s" id="t-chg-s">&nbsp;</div></div>
-      <div class="card tile"><div class="k">Disponibilidad (24 h)</div><div class="v" id="t-up">—</div><div class="s" id="t-up-s">&nbsp;</div></div>
-      <div class="card tile"><div class="k">Red</div><div class="v" id="t-ip" style="font-size:22px">—</div><div class="s" id="t-ip-s">&nbsp;</div></div>
+    <div class="hello">
+      <h1 id="hellotitle">Hola, soy <em>Vector</em></h1>
+      <p id="hellotext">Conectando con el robot… <small id="updated"></small></p>
+      <div class="card" id="reconpanel" hidden style="margin-bottom:12px">
+        <div class="row" style="margin-bottom:6px"><b>Reconexión</b><span class="spacer"></span><button class="btn" id="reconclose" style="padding:2px 10px" aria-label="Cerrar">✕</button></div>
+        <ol class="steps" id="reconsteps" style="margin:0"></ol>
+      </div>
+      <div class="grid tiles">
+        <div class="card tile"><div class="k">Batería</div><div class="v" id="t-bat">—</div><div class="s" id="t-bat-s">&nbsp;</div></div>
+        <div class="card tile"><div class="k">Carga</div><div class="v" id="t-chg">—</div><div class="s" id="t-chg-s">&nbsp;</div></div>
+        <div class="card tile"><div class="k">Red</div><div class="v" id="t-ip" style="font-size:18px">—</div><div class="s" id="t-ip-s">&nbsp;</div></div>
+      </div>
     </div>
   </section>
 
   <section id="hablar" class="card">
-    <h2>Hablar <small>Vector dice lo que escribas (máx. 300 caracteres; se quitan ¿ ¡ y tildes porque su voz los lee mal)</small></h2>
+    <h2>Hablar <small>Vector dice lo que escribas (se quitan ¿ ¡ y tildes porque su voz los lee mal)</small></h2>
     <div class="row" style="margin-bottom:10px">
       <input id="saytext" placeholder="Escribe una frase y pulsa Enter" maxlength="300" aria-label="Texto para que lo diga Vector">
-      <button class="btn" id="saybtn">Decir</button>
+      <button class="btn primary" id="saybtn">Decir</button>
     </div>
     <div class="row" id="quick" aria-label="Frases rápidas"></div>
     <div class="msg" id="saymsg" aria-live="polite"></div>
@@ -143,7 +191,7 @@ input{flex:1;min-width:160px}
       <button class="btn" id="snapbtn" disabled>Guardar captura</button>
     </div>
     <div class="camgrid"><div>
-    <div id="camwrap" style="background:var(--grid);border-radius:8px;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden">
+    <div id="camwrap" style="background:#000;border:1px solid var(--line);border-radius:14px;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden">
       <span class="empty" id="camhint">Cámara apagada. Consume batería y red: apágala cuando no la uses.</span>
       <img id="cam" alt="Imagen en directo de la cámara de Vector" hidden style="width:100%;height:100%;object-fit:contain">
     </div>
@@ -182,6 +230,45 @@ input{flex:1;min-width:160px}
     </div></div>
   </section>
 
+  <section class="grid two">
+    <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Caras conocidas</h2><span class="spacer"></span><button class="btn" id="facesbtn">Cargar</button></div><div id="faces" class="empty">—</div></div>
+    <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Fotos</h2><span class="spacer"></span><button class="btn" id="photosbtn">Cargar</button></div><div id="photos" class="photos"><span class="empty">Dile «Hey Vector, hazme una foto».</span></div></div>
+  </section>
+
+  <section id="control" class="card">
+    <h2>Más acciones</h2>
+    <div class="row">
+      <button class="btn" data-act="headup">Cabeza ↑</button><button class="btn" data-act="headdown">Cabeza ↓</button>
+      <button class="btn" data-act="liftup">Brazo ↑</button><button class="btn" data-act="liftdown">Brazo ↓</button>
+      <button class="btn" data-act="wake">Simular «Hey Vector»</button>
+      <label class="row" style="gap:6px">Volumen <select id="vol" aria-label="Volumen">
+        <option value="0">Silencio</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">Máx.</option>
+      </select></label>
+    </div>
+    <div class="msg" id="ctrlmsg" aria-live="polite"></div>
+  </section>
+</div>
+
+<div id="tab-proyecto" role="tabpanel" aria-labelledby="tabbtn-proyecto" hidden>
+  <nav class="subnav" aria-label="Apartados del proyecto">
+    <a href="#telemetria">Telemetría</a><a href="#voz">Registro de voz</a><a href="#vida">Estadísticas</a><a href="#fases">Fases</a>
+    <a href="#guias">Guías</a><a href="#faq">Preguntas</a><a href="#memoria">Memoria</a><a href="#wifi">Cambio de Wi-Fi</a><a href="#ficha-sec">Ficha</a>
+  </nav>
+
+  <section id="telemetria" class="card">
+    <div class="row" style="margin-bottom:8px">
+      <h2 style="margin:0" id="charttitle">Voltaje de batería</h2><span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Periodo">
+        <button data-h="6">6 h</button><button data-h="24" aria-pressed="true">24 h</button><button data-h="168">7 días</button>
+      </div>
+      <button class="btn" id="tablebtn" aria-expanded="false">Ver tabla</button>
+    </div>
+    <div class="tile" style="margin-bottom:6px"><span class="k">Disponibilidad (24 h)</span> <b id="t-up">—</b> <span class="s" id="t-up-s"></span></div>
+    <div class="chart"><svg id="chart" role="img" aria-label="Batería en el tiempo"></svg><div class="tip" id="tip"></div></div>
+    <div class="note">Una muestra por minuto mientras la web está abierta en el PC. Zonas grises: robot sin conexión; franja roja: batería baja (&lt;20 %). El % se estima por el voltaje, que el robot solo informa en la base (fuera de ella su «nivel» no es fiable).</div>
+    <div id="tablewrap" hidden style="max-height:260px;overflow:auto;margin-top:10px"><table id="ttable"></table></div>
+  </section>
+
   <section id="voz" class="card">
     <div class="row" style="margin-bottom:12px">
       <h2 style="margin:0">Registro de «Hey Vector»</h2><span class="spacer"></span>
@@ -197,53 +284,20 @@ input{flex:1;min-width:160px}
     <div class="note">Se guarda todo lo que wire-pod transcribe mientras esta web está en marcha (wire-pod solo recuerda las 50 últimas). Muchas «no entendidas» con frases sueltas suelen ser conversaciones o la tele que activan la palabra clave.</div>
   </section>
 
-  <section class="grid two">
-    <div class="card"><h2>Ficha del robot</h2><dl id="ficha"></dl></div>
-    <div class="card"><h2>Avance del proyecto</h2>
-      <div class="tile"><div class="v" id="global">—</div><div class="s">avance global medio de las fases</div></div>
-      <div class="bar" style="margin:10px 0 14px"><i id="globalbar" style="width:0"></i></div>
-      <div id="miniphases"></div>
-    </div>
-  </section>
-
-  <section id="telemetria" class="card">
-    <div class="row" style="margin-bottom:8px">
-      <h2 style="margin:0" id="charttitle">Voltaje de batería</h2><span class="spacer"></span>
-      <div class="seg" role="group" aria-label="Periodo">
-        <button data-h="6">6 h</button><button data-h="24" aria-pressed="true">24 h</button><button data-h="168">7 días</button>
-      </div>
-      <button class="btn" id="tablebtn" aria-expanded="false">Ver tabla</button>
-    </div>
-    <div class="chart"><svg id="chart" role="img" aria-label="Voltaje de batería en el tiempo"></svg><div class="tip" id="tip"></div></div>
-    <div class="note">Una muestra por minuto mientras la web está abierta en el PC. Zonas grises: robot sin conexión. Referencia: ~3,6 V baja · ~4,1 V llena.</div>
-    <div id="tablewrap" hidden style="max-height:260px;overflow:auto;margin-top:10px"><table id="ttable"></table></div>
-  </section>
-
   <section id="vida">
     <div class="row" style="margin-bottom:12px"><h2 style="margin:0">Estadísticas de vida</h2><span class="spacer"></span><button class="btn" id="statsbtn">Cargar del robot</button></div>
     <div class="grid tiles" id="lifetiles"></div>
     <div class="card" style="margin-top:12px"><table id="lifetable"><tr><td class="empty">Pulsa «Cargar del robot» con el robot en línea.</td></tr></table></div>
   </section>
 
-  <section class="grid two">
-    <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Caras conocidas</h2><span class="spacer"></span><button class="btn" id="facesbtn">Cargar</button></div><div id="faces" class="empty">—</div></div>
-    <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Fotos</h2><span class="spacer"></span><button class="btn" id="photosbtn">Cargar</button></div><div id="photos" class="photos"><span class="empty">Dile «Hey Vector, hazme una foto».</span></div></div>
-  </section>
-
-  <section id="control" class="card">
-    <h2>Control rápido</h2>
-    <div class="row">
-      <button class="btn" data-act="headup">Cabeza ↑</button><button class="btn" data-act="headdown">Cabeza ↓</button>
-      <button class="btn" data-act="liftup">Brazo ↑</button><button class="btn" data-act="liftdown">Brazo ↓</button>
-      <button class="btn" data-act="wake">Simular «Hey Vector»</button>
-      <label class="row" style="gap:6px">Volumen <select id="vol" aria-label="Volumen">
-        <option value="0">Silencio</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">Máx.</option>
-      </select></label>
+  <section id="fases" class="grid two">
+    <div class="card"><h2>Avance del proyecto</h2>
+      <div class="tile"><div class="v" id="global">—</div><div class="s">avance global medio de las fases</div></div>
+      <div class="bar" style="margin:10px 0 14px"><i id="globalbar" style="width:0"></i></div>
+      <div id="miniphases"></div>
     </div>
-    <div class="msg" id="ctrlmsg" aria-live="polite"></div>
+    <div class="card"><h2>Fases del proyecto</h2><div id="phases"></div></div>
   </section>
-
-  <section id="fases" class="card"><h2>Fases del proyecto</h2><div id="phases"></div></section>
 
   <section id="guias"><h2>Guías</h2><div class="grid two" id="guidelist"></div></section>
 
@@ -255,6 +309,9 @@ input{flex:1;min-width:160px}
       <div class="note">Si algo falla: comprueba con <code>python scripts\ble_modo_emparejamiento.py</code> que el robot está en modo emparejamiento. Guía completa en <code>docs/08-cambio-de-wifi.md</code>.</div>
     </div>
   </section>
+
+  <section id="ficha-sec" class="card"><h2>Ficha del robot</h2><dl id="ficha"></dl></section>
+</div>
 </main>
 
 <script>
@@ -274,10 +331,99 @@ const sdk = (ep, params = {}) => api(`/api-sdk/${ep}?` + new URLSearchParams({se
 
 function setStatus(kind, text) {
   const colors = {ok:"var(--good)", off:"var(--crit)", wp:"var(--warn)"};
-  const icons = {ok:"●", off:"✕", wp:"!"};
+  const icons = {ok:"", off:"✕", wp:"!"}; // el texto ya dice el estado; el icono refuerza solo los avisos
   $("#status").innerHTML = `<span class="dot" style="background:${colors[kind]}"></span><span aria-hidden="true">${icons[kind]}</span><span>${esc(text)}</span>`;
   $("#reconbtn").hidden = kind === "ok";
+  setMood(kind);
 }
+
+/* ---------- Batería ---------- */
+// Curva aproximada de una celda Li-ion en reposo. Cargando, la tensión medida sube ~0,1 V: se descuenta.
+// shortcut: curva genérica, no calibrada con esta batería; si se cambia la batería, revisar los puntos.
+const CURVA = [[3.50, 0], [3.60, 10], [3.70, 30], [3.80, 50], [3.90, 68], [4.00, 84], [4.15, 100]];
+function batteryPct(v, cargando) {
+  v -= cargando ? 0.1 : 0;
+  if (v <= CURVA[0][0]) return 0;
+  for (let i = 1; i < CURVA.length; i++) {
+    const [v1, p1] = CURVA[i], [v0, p0] = CURVA[i - 1];
+    if (v <= v1) return Math.round(p0 + (v - v0) / (v1 - v0) * (p1 - p0));
+  }
+  return 100;
+}
+function batteryWarn(pct, enBase) {
+  let el = $("#batwarn");
+  if (!el) { el = document.createElement("div"); el.id = "batwarn"; el.className = "card"; el.setAttribute("role", "alert");
+    el.style.cssText = "border-color:var(--crit);margin-bottom:12px;padding:12px 14px"; $("#reconpanel").before(el); }
+  el.hidden = pct >= 20;
+  el.innerHTML = enBase ? `🔋 <b>Batería baja (${pct} %)</b>: está cargando. Déjalo en la base un buen rato antes de usarlo.`
+    : `🪫 <b>Batería baja (${pct} %)</b>: llévalo a la base o se apagará.`;
+}
+
+/* ---------- Cara animada (ojos) ---------- */
+const face = $("#face");
+const quiet = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const HELLO = {
+  ok: ["Hola, soy <em>Vector</em>", "Estoy despierto y conectado. ¿Qué hacemos?"],
+  off: ["Zzz… <em>Vector</em>", "No respondo ahora mismo: puede que esté apagado, arrancando o fuera de la Wi-Fi. Prueba «Reconectar»."],
+  wp: ["Me falta <em>wire-pod</em>", "Sin wire-pod no te oigo. Ábrelo desde el menú Inicio o con iniciar_web.bat."],
+};
+let mood = null;
+function setMood(kind) {
+  if (kind === mood) return;
+  mood = kind;
+  face.classList.toggle("sleep", kind === "off");
+  face.classList.toggle("off", kind === "wp");
+  const [t, p] = HELLO[kind] || HELLO.off;
+  $("#hellotitle").innerHTML = t;
+  $("#hellotext").firstChild.textContent = p + " ";
+  if (kind === "ok") emote("happy", 1600); // saludo al conectar
+}
+function emote(cls, ms) {
+  face.classList.add(cls);
+  clearTimeout(emote[cls]);
+  emote[cls] = setTimeout(() => face.classList.remove(cls), ms);
+}
+function look(x, y) { face.style.setProperty("--lx", x + "%"); face.style.setProperty("--ly", y + "%"); }
+if (!quiet) {
+  (function blink() {  // parpadeo con ritmo irregular, a veces doble
+    if (mood === "ok") { face.classList.add("blink"); setTimeout(() => face.classList.remove("blink"), 170);
+      if (Math.random() < .2) setTimeout(() => { face.classList.add("blink"); setTimeout(() => face.classList.remove("blink"), 170); }, 260); }
+    setTimeout(blink, 2200 + Math.random() * 3500);
+  })();
+  let lastMouse = 0;
+  (function wander() {  // mirada curiosa cuando nadie mueve el ratón
+    if (mood === "ok" && Date.now() - lastMouse > 2500) look((Math.random() - .5) * 14, (Math.random() - .5) * 10);
+    if (mood === "ok" && Math.random() < .12) emote("happy", 1200);
+    setTimeout(wander, 1400 + Math.random() * 2400);
+  })();
+  addEventListener("pointermove", (e) => {  // sigue al puntero
+    if (mood !== "ok") return;
+    lastMouse = Date.now();
+    const r = face.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.width / 2)) / innerWidth, dy = (e.clientY - (r.top + r.height / 2)) / innerHeight;
+    look(Math.max(-1, Math.min(1, dx * 2)) * 9, Math.max(-1, Math.min(1, dy * 2)) * 7);
+  });
+  face.parentElement.addEventListener("click", () => mood === "ok" && emote("happy", 1500));
+}
+
+/* ---------- Pestañas ---------- */
+function showTab(name) {
+  document.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  $("#tab-robot").hidden = name !== "robot";
+  $("#tab-proyecto").hidden = name !== "proyecto";
+  if (name === "proyecto" && samples.length) drawChart(); // el gráfico mide su ancho: dibujarlo ya visible
+}
+document.querySelectorAll("[data-tab]").forEach((b) => b.onclick = () => {
+  history.replaceState(null, "", b.dataset.tab === "proyecto" ? "#proyecto" : "#");
+  showTab(b.dataset.tab);
+});
+// los enlaces internos (#voz, #fases…) abren la pestaña Proyecto
+function tabFromHash() {
+  const h = location.hash.slice(1);
+  const el = h && document.getElementById(h);
+  showTab(h === "proyecto" || (el && $("#tab-proyecto").contains(el)) ? "proyecto" : "robot");
+}
+addEventListener("hashchange", tabFromHash);
 
 $("#reconbtn").onclick = async () => {
   const b = $("#reconbtn"); b.disabled = true; b.textContent = "Reconectando…";
@@ -339,16 +485,22 @@ async function loadTelemetria() {
   else if (!last.online) setStatus("off", "Robot sin conexión");
   else setStatus("ok", "En línea");
   const lastOn = [...samples].reverse().find((s) => s.online);
+  // % solo a partir del voltaje: fuera de la base este firmware da 0 V y un «nivel 3» que no es fiable
+  // (se ha apagado varias veces mientras decía «llena»). Se usa la última lectura con voltaje.
+  const lastV = [...samples].reverse().find((s) => s.online && s.voltios > 0);
+  if (lastV) {
+    const pct = batteryPct(lastV.voltios, lastV.cargando);
+    const ageMin = Math.round((Date.now() / 1000 - lastV.t) / 60);
+    const fresh = lastOn && lastOn.t === lastV.t;
+    $("#t-bat").innerHTML = `${pct} %<div class="bar" style="margin-top:6px"><i style="width:${pct}%;${pct < 20 ? "background:var(--crit);box-shadow:none" : ""}"></i></div>`;
+    $("#t-bat-s").textContent = `${lastV.voltios.toFixed(2)} V${lastV.cargando ? " · cargando" : ""}` +
+      (fresh ? "" : ` · dato de hace ${ageMin} min (fuera de la base no informa)`);
+    batteryWarn(pct, lastV.cargando || lastV.en_base);
+  } else if (lastOn) {
+    $("#t-bat").textContent = "¿?";
+    $("#t-bat-s").textContent = "Sin dato fiable: ponlo en la base para medirla";
+  }
   if (lastOn) {
-    const old = last.online ? "" : " (último dato)";
-    if (lastOn.voltios > 0) {
-      const pct = Math.max(0, Math.min(100, Math.round((lastOn.voltios - 3.6) / 0.5 * 100)));
-      $("#t-bat").textContent = `${lastOn.voltios.toFixed(2)} V`;
-      $("#t-bat-s").textContent = `${LEVEL[lastOn.nivel] ?? "—"} · ≈${pct} %` + old;
-    } else { // este firmware a veces no informa del voltaje: mostrar el nivel
-      $("#t-bat").textContent = LEVEL[lastOn.nivel] ?? "—";
-      $("#t-bat-s").textContent = `nivel ${lastOn.nivel ?? "?"} de 3 · sin dato de voltaje` + old;
-    }
     $("#t-chg").textContent = lastOn.cargando ? "Cargando" : lastOn.en_base ? "En la base" : "Fuera de la base";
     $("#t-chg-s").textContent = lastOn.cubo_voltios ? `Cubo: ${lastOn.cubo_voltios.toFixed(2)} V` : "Cubo: sin datos";
   }
@@ -368,21 +520,17 @@ function drawChart() {
   const svg = $("#chart"), W = svg.clientWidth || 800, H = 240, m = {l:44, r:12, t:12, b:26};
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const t1 = Date.now() / 1000, t0 = t1 - horas * 3600;
-  // Voltaje si el robot lo da; si no, nivel 1-3 (nunca ambos: un solo eje)
-  const useV = samples.some((s) => s.online && s.voltios > 0);
-  const val = (s) => useV ? s.voltios : s.nivel;
-  const on = samples.filter((s) => s.online && val(s) > 0);
-  $("#charttitle").textContent = useV ? "Voltaje de batería" : "Nivel de batería";
-  let vmin = useV ? 3.5 : 0.5, vmax = useV ? 4.2 : 3.5;
-  if (useV) on.forEach((s) => { vmin = Math.min(vmin, s.voltios - .05); vmax = Math.max(vmax, s.voltios + .05); });
+  // % de batería estimado por voltaje; solo muestras con voltaje (el «nivel» del robot no es fiable)
+  const val = (s) => batteryPct(s.voltios, s.cargando);
+  const on = samples.filter((s) => s.online && s.voltios > 0);
+  $("#charttitle").textContent = "Batería (%)";
+  const vmin = 0, vmax = 100;
   const x = (t) => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
   const y = (v) => m.t + (vmax - v) / (vmax - vmin) * (H - m.t - m.b);
-  let g = "";
-  const yt = useV ? [] : [1, 2, 3];
-  if (useV) for (let v = Math.ceil(vmin * 10) / 10; v <= vmax; v += .1) yt.push(v);
-  yt.forEach((v) => {
+  let g = `<rect x="${m.l}" y="${y(20)}" width="${W - m.l - m.r}" height="${y(0) - y(20)}" fill="var(--crit)" opacity=".08"/>`; // zona baja
+  [0, 20, 50, 80, 100].forEach((v) => {
     g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>` +
-         `<text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${useV ? v.toFixed(1) : LEVEL[v]}</text>`;
+         `<text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${v} %</text>`;
   });
   const ticks = horas <= 24 ? 6 : 7;
   for (let i = 0; i <= ticks; i++) {
@@ -418,7 +566,7 @@ function drawChart() {
     $("#xh").setAttribute("x1", cx); $("#xh").setAttribute("x2", cx); $("#xh").setAttribute("visibility", "visible");
     $("#xd").setAttribute("cx", cx); $("#xd").setAttribute("cy", cy); $("#xd").setAttribute("visibility", "visible");
     const tip = $("#tip");
-    tip.innerHTML = `${fmtT(s.t)} · <b>${useV ? s.voltios.toFixed(2) + " V" : "Batería " + LEVEL[s.nivel].toLowerCase()}</b> ·${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
+    tip.innerHTML = `${fmtT(s.t)} · <b>${val(s)} %</b> (${s.voltios.toFixed(2)} V) · ${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
     tip.style.left = (cx * r.width / W) + "px"; tip.style.top = (cy * r.height / H) + "px"; tip.style.display = "block";
   };
   svg.onmouseleave = () => { $("#tip").style.display = "none"; $("#xh")?.setAttribute("visibility", "hidden"); $("#xd")?.setAttribute("visibility", "hidden"); };
@@ -430,8 +578,8 @@ function drawTable() {
   $("#ttable").innerHTML = `<tr><th>Hora</th><th>Estado</th><th class="n">Voltaje</th><th>Base</th></tr>` + (rows || `<tr><td colspan="4" class="empty">Sin muestras</td></tr>`);
 }
 
-document.querySelectorAll(".seg button").forEach((b) => b.onclick = () => {
-  document.querySelectorAll(".seg button").forEach((o) => o.setAttribute("aria-pressed", o === b));
+document.querySelectorAll("[data-h]").forEach((b) => b.onclick = () => {
+  document.querySelectorAll("[data-h]").forEach((o) => o.setAttribute("aria-pressed", o === b));
   horas = +b.dataset.h; loadTelemetria();
 });
 $("#tablebtn").onclick = () => {
@@ -515,6 +663,7 @@ async function say(t) {
   t = paraVoz(t);
   if (!t) { $("#saymsg").textContent = "Escribe una frase."; return; }
   $("#saymsg").textContent = `Diciendo: «${t}»…`;
+  emote("talk", Math.min(8000, 1500 + t.length * 70));
   try { await withControl(async () => { await sdk("say_text", {text: t}); await sleep(Math.min(8000, 1500 + t.length * 70)); }); $("#saymsg").textContent = `Dicho ✓ «${t}»`; store.add(t); renderSay(); }
   catch (e) { $("#saymsg").textContent = "Error: " + e.message; }
 }
@@ -548,6 +697,7 @@ $("#vol").onchange = async (e) => {
 /* ---------- Cámara (MJPEG de wire-pod reenviado por server.py) ---------- */
 function camOff(msg = "") {
   const img = $("#cam"); img.removeAttribute("src"); img.hidden = true; // quitar src corta la conexión
+  face.classList.remove("focus");
   $("#camhint").hidden = false; $("#cambtn").textContent = "Encender"; $("#cambtn").setAttribute("aria-pressed", "false");
   $("#snapbtn").disabled = true; $("#cammsg").textContent = msg;
   if (SERIAL) sdk("stop_cam_stream").catch(() => {});
@@ -557,7 +707,7 @@ $("#cambtn").onclick = () => {
   if (!SERIAL) return $("#cammsg").textContent = "Sin robot registrado todavía.";
   const img = $("#cam");
   $("#cammsg").textContent = "Conectando con la cámara…";
-  img.onload = () => { $("#cammsg").textContent = "En directo"; $("#snapbtn").disabled = false; };
+  img.onload = () => { $("#cammsg").textContent = "En directo"; $("#snapbtn").disabled = false; face.classList.add("focus"); };
   img.onerror = () => camOff("No llega imagen: ¿está el robot en línea?");
   img.src = "/cam-stream?" + new URLSearchParams({serial: SERIAL, t: Date.now()});
   img.hidden = false; $("#camhint").hidden = true;
@@ -699,6 +849,7 @@ document.querySelectorAll("[data-vf]").forEach((b) => b.onclick = () => {
 
 /* ---------- Arranque ---------- */
 (async () => {
+  tabFromHash();
   try { const info = await api("/api-sdk/get_sdk_info"); SERIAL = info.robots[0].esn; } catch { /* wire-pod apagado */ }
   await loadProyecto().catch((e) => console.error(e));
   await loadTelemetria();

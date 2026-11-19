@@ -61,7 +61,11 @@
     {"fecha": "2026-11-19", "titulo": "Reconexión tras reiniciarse el robot",
      "texto": "El robot se apagó y reinició; después respondía al ping pero wire-pod recibía 401 y timeouts: seguía usando la conexión gRPC anterior, ya inválida. Solución: /api-sdk/disconnect la descarta y la siguiente llamada la recrea (volvió al instante). La web lo hace sola si ve el robot en la red sin respuesta, y añade un botón «Reconectar» con diagnóstico paso a paso (wire-pod → robot en la red → conexión)."},
     {"fecha": "2026-11-19", "titulo": "Voz de Vector y signos españoles",
-     "texto": "Su sintetizador (inglés) lee mal ¿, ¡ y las tildes. El cuadro Hablar los quita antes de enviar (á→a…, se mantiene la ñ y el ? final para la entonación) y las frases rápidas van sin ellos."}
+     "texto": "Su sintetizador (inglés) lee mal ¿, ¡ y las tildes. El cuadro Hablar los quita antes de enviar (á→a…, se mantiene la ñ y el ? final para la entonación) y las frases rápidas van sin ellos."},
+    {"fecha": "2026-11-19", "titulo": "Rediseño con la estética de Vector",
+     "texto": "Negro profundo, grafito y ojos verdes que brillan; tipografía geométrica fina (Quicksand) y toques dorados. La portada es su cara: los ojos parpadean, miran al puntero y curiosean, sonríen al conectar o al hacer clic, se balancean mientras habla, se concentran con la cámara y duermen (zzz) si está desconectado. Dos pestañas: Robot (interactivo) y Proyecto (telemetría, registro de voz, estadísticas, fases, guías, preguntas, memoria, Wi-Fi y ficha)."},
+    {"fecha": "2026-11-19", "titulo": "Apagones por batería y porcentaje fiable",
+     "texto": "Se apagó tres veces (12:15, 12:51, 13:02). La telemetría lo explica: en la base marcaba 3,56 V (≈6 %) sin estar cargando, y fuera de la base el firmware da 0 V y un «nivel 3 = llena» falso. Ahora el % se calcula solo por voltaje (curva Li-ion, −0,1 V si está cargando), con barra, aviso de batería baja (<20 %) y gráfico en %. Si vuelve a quedarse en la base sin «cargando», revisar contactos y posición."}
   ],
   "protocolo_wifi": [
     "Conecta el PC a la red nueva y comprueba en Windows que es «Red privada» (Configuración → Red → propiedades). Si es pública, el firewall puede bloquear a wire-pod.",
