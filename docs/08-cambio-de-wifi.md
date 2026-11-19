@@ -24,7 +24,9 @@ Cuando cambiemos de router o de casa. Tiempo estimado: 5 minutos.
    `wifi-connect`, `wifi-ip` y `status`, y termina sola.
 6. Comprueba `wifi state: online` y la `IPv4`. **No hay que tocar wire-pod**: cuando el robot se conecta,
    wire-pod anota la nueva IP automáticamente (`chipper/pkg/vars/vars.go`, `RecordBot`).
-7. Verifica en la web del proyecto (`python web\server.py` → <http://localhost:8090>) que el estado pasa
+7. **SDK de Python** (solo si lo usas): guarda la IP del robot, así que relánzalo cuando el robot ya
+   esté en línea: `.venv\Scripts\python.exe scripts\configurar_sdk.py`.
+8. Verifica en la web del proyecto (`python web\server.py` → <http://localhost:8090>) que el estado pasa
    a **En línea**, y prueba «Hey Vector, ¿qué hora es?».
 
 ## Si algo falla

@@ -12,15 +12,29 @@ fuente de verdad: están en `anki_vector/messaging/*.proto` (SDK Python) y en `p
 | `cyb3rdog/vector-python-sdk` | Fork mantenido por la comunidad (compatibilidad Escape Pod). |
 | **`kercre123/wirepod-vector-python-sdk`** → PyPI **`wirepod-vector-sdk`** | Fork para wire-pod y Python moderno. **Usar este.** |
 
-Soporta Python **3.6–3.12** (en este PC hay 3.14: usar un entorno con 3.11/3.12, p. ej. `py -3.12`).
-Desinstalar antes otros SDK (`anki_vector`, `ikkez_vector`, `cyb3r_vector_sdk`).
+Soporta Python **3.6–3.12** (en este PC: Python 3.12 instalado con
+`winget install Python.Python.3.12 --scope user`, conviviendo con el 3.14 por defecto).
 
 ```powershell
-py -3.12 -m venv .venv; .\.venv\Scripts\Activate.ps1
-python -m pip install -U pip wirepod_vector_sdk
-python -m anki_vector.configure      # el robot debe estar ya autenticado en wire-pod; guarda ~/.anki_vector/sdk_config.ini
-python examples\python\hola_vector.py
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -U pip wirepod_vector_sdk
+.\.venv\Scripts\python.exe scripts\configurar_sdk.py     # robot encendido + wire-pod abierto
+.\.venv\Scripts\python.exe examples\python\hola_vector.py
 ```
+
+**Por qué `configurar_sdk.py` y no `python -m anki_vector.configure`:** el asistente oficial pide el
+certificado del robot a wire-pod (`/session-certs/<serie>`), que solo lo tiene si lo descargó de los
+servidores de DDL. En nuestro robot (autenticado con `vector-ble-cli`) no existía: `cert does not exist`.
+El script lee el certificado **directamente del robot** (TLS del puerto 443), saca el nombre del propio
+certificado, y reutiliza las funciones del asistente oficial para autenticar y escribir
+`~/.anki_vector/sdk_config.ini`. **Hay que relanzarlo si cambia la IP del robot** (p. ej. al cambiar de Wi-Fi).
+
+### Ejemplos del repositorio
+
+| Ejemplo | Qué hace |
+|---|---|
+| `examples/python/hola_vector.py` | Batería, habla, mueve cabeza y brazo, guarda una foto |
+| `examples/python/pantalla.py` | Muestra una imagen o GIF animado en su cara (adapta a 184×96 sin deformar) |
 
 Log detallado: `$env:VECTOR_LOG_LEVEL = "DEBUG"`. Documentación del fork: <https://keriganc.com/sdkdocs>
 

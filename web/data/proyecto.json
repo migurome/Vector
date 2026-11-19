@@ -22,8 +22,8 @@
      "detalle": "Panel local con estado, batería, cámara en directo (MJPEG ~4 fps, 640×360, capturas) con control remoto (ruedas, cabeza, brazo, teclado, modo libre), cuadro Hablar, estadísticas de vida, caras, fotos, controles y registro de telemetría. Arranque con iniciar_web.bat. Fase cerrada."},
     {"id": "F4", "nombre": "Configuración avanzada de wire-pod", "avance": 0,
      "detalle": "Tiempo (clave de API meteorológica), preguntas abiertas con LLM, intents personalizados en español."},
-    {"id": "F5", "nombre": "SDK de Python", "avance": 10,
-     "detalle": "Ejemplo hola_vector.py escrito. Falta: instalar Python 3.12, configurar el SDK y primeros comportamientos propios."},
+    {"id": "F5", "nombre": "SDK de Python", "avance": 70,
+     "detalle": "Python 3.12 + .venv con wirepod_vector_sdk 0.8.1. scripts/configurar_sdk.py (certificado leído del robot, sin DDL). hola_vector.py validado (habla, mueve, foto) y pantalla.py (imágenes/GIF en su cara). Falta: comportamientos reactivos con eventos (caras, caricias) y llevar la pantalla a la web."},
     {"id": "F6", "nombre": "Servidor permanente y plugins", "avance": 0,
      "detalle": "Mover wire-pod a una Raspberry Pi (siempre encendida) y desarrollar plugins Go para comandos de voz con lógica propia."},
     {"id": "F7", "nombre": "Proyectos de aplicación", "avance": 0,
@@ -53,7 +53,9 @@
     {"fecha": "2026-11-19", "titulo": "Cámara en directo y cierre de la Fase 3",
      "texto": "wire-pod emite la cámara como MJPEG en /cam-stream; server.py lo reenvía trozo a trozo. ~4 fotogramas/s a 640×360. La web añade botón de encender/apagar y «Guardar captura». También: cuadro Hablar con frases rápidas e historial, y soporte del nivel de batería cuando el firmware no da voltaje (solo lo da en la base)."},
     {"fecha": "2026-11-19", "titulo": "Control remoto",
-     "texto": "Junto a la cámara: «Tomar control» (wire-pod mantiene el control hasta liberarlo), cruceta de ruedas, cabeza y brazo con mantener pulsado, velocidad 40–200 mm/s, teclado (flechas/WASD, R/F, T/G, espacio) y captura. «Modo libre» devuelve la autonomía. Seguridad: se para al soltar, al perder el foco la pestaña y se libera al cerrar la web."}
+     "texto": "Junto a la cámara: «Tomar control» (wire-pod mantiene el control hasta liberarlo), cruceta de ruedas, cabeza y brazo con mantener pulsado, velocidad 40–200 mm/s, teclado (flechas/WASD, R/F, T/G, espacio) y captura. «Modo libre» devuelve la autonomía. Seguridad: se para al soltar, al perder el foco la pestaña y se libera al cerrar la web."},
+    {"fecha": "2026-11-19", "titulo": "SDK de Python funcionando",
+     "texto": "Python 3.12 junto al 3.14 y entorno .venv. El asistente oficial fallaba («cert does not exist»: wire-pod no tenía el certificado de DDL); scripts/configurar_sdk.py lo lee del propio robot por TLS. hola_vector.py: conecta, toma control, habla, mueve y hace foto. pantalla.py: imágenes y GIF en la cara (184×96)."}
   ],
   "protocolo_wifi": [
     "Conecta el PC a la red nueva y comprueba en Windows que es «Red privada» (Configuración → Red → propiedades). Si es pública, el firewall puede bloquear a wire-pod.",
@@ -63,6 +65,7 @@
     "En PowerShell: cd <carpeta del proyecto>\\tools\\vector-ble-cli y ejecuta: node index.js --wifi \"NOMBRE_RED\" \"CONTRASEÑA\"",
     "Escribe el PIN que muestra la cara del robot. La herramienta escanea, conecta, muestra la IP y termina.",
     "Comprueba que sale «wifi state: online». En 1–2 minutos wire-pod anota la nueva IP solo (vars.go: RecordBot).",
+    "Si usas el SDK de Python, actualiza su IP: .venv\\Scripts\\python.exe scripts\\configurar_sdk.py",
     "Verifica en esta web que el estado pasa a «En línea». Prueba: «Hey Vector, ¿qué hora es?»."
   ]
 }
