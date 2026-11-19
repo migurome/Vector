@@ -12,62 +12,157 @@
     "voz": "Vosk · es-ES (vosk-model-small-es-0.42)"
   },
   "fases": [
-    {"id": "F0", "nombre": "Investigación y repositorio", "avance": 100,
-     "detalle": "Documentación en castellano (historia, hardware, arquitectura, wire-pod, SDKs, firmware), catálogo de 15 repos y script de clonado."},
-    {"id": "F1", "nombre": "Servidor local wire-pod", "avance": 95,
-     "detalle": "Instalado en Windows, modelo de voz en español instalado a mano, robot activado. Voz en castellano validada («¿Qué hora es?»). Falta: dejarlo arrancando con Windows."},
-    {"id": "F2", "nombre": "Emparejamiento y conectividad", "avance": 100,
-     "detalle": "Herramienta propia vector-ble-cli (BLE sin Chrome), Wi-Fi, OTA 2.0.1.6086ep y autenticación. Modo --wifi para cambiar de red, ensayado con éxito. Fase cerrada."},
-    {"id": "F3", "nombre": "Web del proyecto y telemetría", "avance": 100,
-     "detalle": "Panel local con estado, batería, cámara en directo (MJPEG ~4 fps, 640×360, capturas) con control remoto (ruedas, cabeza, brazo, teclado, modo libre), cuadro Hablar, estadísticas de vida, caras, fotos, controles y registro de telemetría. Arranque con iniciar_web.bat. Fase cerrada."},
-    {"id": "F4", "nombre": "Configuración avanzada de wire-pod", "avance": 0,
-     "detalle": "Tiempo (clave de API meteorológica), preguntas abiertas con LLM, intents personalizados en español."},
-    {"id": "F5", "nombre": "SDK de Python", "avance": 70,
-     "detalle": "Python 3.12 + .venv con wirepod_vector_sdk 0.8.1. scripts/configurar_sdk.py (certificado leído del robot, sin DDL). hola_vector.py validado (habla, mueve, foto) y pantalla.py (imágenes/GIF en su cara). Falta: comportamientos reactivos con eventos (caras, caricias) y llevar la pantalla a la web."},
-    {"id": "F6", "nombre": "Servidor permanente y plugins", "avance": 0,
-     "detalle": "Mover wire-pod a una Raspberry Pi (siempre encendida) y desarrollar plugins Go para comandos de voz con lógica propia."},
-    {"id": "F7", "nombre": "Proyectos de aplicación", "avance": 0,
-     "detalle": "Visión con OpenCV, integración domótica (Home Assistant), asistente con IA, avisos y notificaciones."},
-    {"id": "F8", "nombre": "Firmware propio (WireOS)", "avance": 5,
-     "detalle": "Documentado el desbloqueo y la compilación. Requiere Linux y tiene riesgo de dejar el robot inservible."}
+    {
+      "id": "F0",
+      "nombre": "Investigación y repositorio",
+      "avance": 100,
+      "detalle": "Documentación en castellano (historia, hardware, arquitectura, wire-pod, SDKs, firmware), catálogo de 15 repos y script de clonado."
+    },
+    {
+      "id": "F1",
+      "nombre": "Servidor local wire-pod",
+      "avance": 95,
+      "detalle": "Instalado en Windows, modelo de voz en español instalado a mano, robot activado. Voz en castellano validada («¿Qué hora es?»). Falta: dejarlo arrancando con Windows."
+    },
+    {
+      "id": "F2",
+      "nombre": "Emparejamiento y conectividad",
+      "avance": 100,
+      "detalle": "Herramienta propia vector-ble-cli (BLE sin Chrome), Wi-Fi, OTA 2.0.1.6086ep y autenticación. Modo --wifi para cambiar de red, ensayado con éxito. Fase cerrada."
+    },
+    {
+      "id": "F3",
+      "nombre": "Web del proyecto y telemetría",
+      "avance": 100,
+      "detalle": "Panel local con estado, batería, cámara en directo (MJPEG ~4 fps, 640×360, capturas) con control remoto (ruedas, cabeza, brazo, teclado, modo libre), cuadro Hablar, estadísticas de vida, caras, fotos, controles y registro de telemetría. Arranque con iniciar_web.bat. Fase cerrada."
+    },
+    {
+      "id": "F4",
+      "nombre": "Configuración avanzada de wire-pod",
+      "avance": 0,
+      "detalle": "Tiempo (clave de API meteorológica), preguntas abiertas con LLM, intents personalizados en español."
+    },
+    {
+      "id": "F5",
+      "nombre": "SDK de Python",
+      "avance": 70,
+      "detalle": "Python 3.12 + .venv con wirepod_vector_sdk 0.8.1. scripts/configurar_sdk.py (certificado leído del robot, sin DDL). hola_vector.py validado (habla, mueve, foto) y pantalla.py (imágenes/GIF en su cara). Falta: comportamientos reactivos con eventos (caras, caricias) y llevar la pantalla a la web."
+    },
+    {
+      "id": "F6",
+      "nombre": "Servidor permanente y plugins",
+      "avance": 0,
+      "detalle": "Mover wire-pod a una Raspberry Pi (siempre encendida) y desarrollar plugins Go para comandos de voz con lógica propia."
+    },
+    {
+      "id": "F7",
+      "nombre": "Proyectos de aplicación",
+      "avance": 0,
+      "detalle": "Visión con OpenCV, integración domótica (Home Assistant), asistente con IA, avisos y notificaciones."
+    },
+    {
+      "id": "F8",
+      "nombre": "Firmware propio (WireOS)",
+      "avance": 5,
+      "detalle": "Documentado el desbloqueo y la compilación. Requiere Linux y tiene riesgo de dejar el robot inservible."
+    }
   ],
   "memoria": [
-    {"fecha": "2026-11-19", "titulo": "Investigación y repositorio inicial",
-     "texto": "Estado del ecosistema tras el cierre de Anki: wire-pod como servidor local, SDKs Python/Go/.NET, WireOS como firmware comunitario. Creado el repositorio con 7 documentos, catálogo de recursos y script de clonado (Windows necesita core.longpaths para wire-os-victor)."},
-    {"fecha": "2026-11-19", "titulo": "Instalación de wire-pod",
-     "texto": "Instalador v1.2.18 (sin firma digital; SmartScreen). La descarga del modelo de voz desde GitHub se quedó en 0 bytes con la conexión del móvil: se instaló a mano desde alphacephei.com en %APPDATA%\\wire-pod\\vosk\\models\\es-ES\\model."},
-    {"fecha": "2026-11-19", "titulo": "La batalla de la Wi-Fi",
-     "texto": "Vector solo usa 2,4 GHz. El punto de acceso del POCO M6 Pro iba a 5 GHz sin opción de cambiarlo; se probó compartir por USB + zona Wi-Fi de Windows y al final se usó la red de casa (Movistar Wi-Fi 6 emite ambas bandas con el mismo nombre)."},
-    {"fecha": "2026-11-19", "titulo": "Bluetooth: Chrome no conecta",
-     "texto": "wp.pvic.xyz se quedaba en la selección del robot sin error (el código traga el fallo de conexión GATT). Con Python/bleak sí conectaba (RSSI -32). Se creó tools/vector-ble-cli reutilizando el protocolo de DDL con el paquete webbluetooth para Node."},
-    {"fecha": "2026-11-19", "titulo": "Modo emparejamiento",
-     "texto": "Descubrimiento clave: la pantalla anki.com/v no implica modo emparejamiento. El robot lo anuncia con 'p' en el 4º byte de manufacturer data (f8057670); se activa con doble pulsación y dura ~1 min. Se corrigió además la lectura de búferes en Node (byteOffset) y el orden de suscripción."},
-    {"fecha": "2026-11-19", "titulo": "Firmware ep y activación",
-     "texto": "PIN → wifi-connect → ota-start 2.0.1.6086ep (100 %) → reinicio → anki-auth con el token de wire-pod: AuthorizedAsSecondary. wire-pod registra el robot (<nº de serie>, <IP del robot>, activated)."},
-    {"fecha": "2026-11-19", "titulo": "Web del proyecto",
-     "texto": "Panel local con telemetría, estadísticas, controles, fases y este diario. Protocolo de cambio de red con vector-ble-cli --wifi."},
-    {"fecha": "2026-11-19", "titulo": "Primera orden de voz en castellano",
-     "texto": "«Hey Vector… ¿qué hora es?» funciona: wake word → wire-pod → Vosk es-ES → intent → respuesta del robot. Cadena de voz completa validada."},
-    {"fecha": "2026-11-19", "titulo": "Ensayo del protocolo de cambio de Wi-Fi",
-     "texto": "Base → doble pulsación → node index.js --wifi \"MI-WIFI\" … → PIN. Reconectó sin incidencias, wire-pod lo siguió viendo en <IP del robot> y la web continuó en línea. Fase 2 cerrada; listo para el cambio de red real."},
-    {"fecha": "2026-11-19", "titulo": "Cámara en directo y cierre de la Fase 3",
-     "texto": "wire-pod emite la cámara como MJPEG en /cam-stream; server.py lo reenvía trozo a trozo. ~4 fotogramas/s a 640×360. La web añade botón de encender/apagar y «Guardar captura». También: cuadro Hablar con frases rápidas e historial, y soporte del nivel de batería cuando el firmware no da voltaje (solo lo da en la base)."},
-    {"fecha": "2026-11-19", "titulo": "Control remoto",
-     "texto": "Junto a la cámara: «Tomar control» (wire-pod mantiene el control hasta liberarlo), cruceta de ruedas, cabeza y brazo con mantener pulsado, velocidad 40–200 mm/s, teclado (flechas/WASD, R/F, T/G, espacio) y captura. «Modo libre» devuelve la autonomía. Seguridad: se para al soltar, al perder el foco la pestaña y se libera al cerrar la web."},
-    {"fecha": "2026-11-19", "titulo": "SDK de Python funcionando",
-     "texto": "Python 3.12 junto al 3.14 y entorno .venv. El asistente oficial fallaba («cert does not exist»: wire-pod no tenía el certificado de DDL); scripts/configurar_sdk.py lo lee del propio robot por TLS. hola_vector.py: conecta, toma control, habla, mueve y hace foto. pantalla.py: imágenes y GIF en la cara (184×96)."},
-    {"fecha": "2026-11-19", "titulo": "Registro de «Hey Vector», guías y preguntas",
-     "texto": "wire-pod solo guarda en memoria las 50 últimas órdenes (/api/get_logs); server.py las copia cada 10 s a web/data/voz.jsonl (fuera de Git). La web muestra cuántas hay, % entendidas, órdenes más usadas y la lista filtrable. Primer dato: de 7 activaciones solo 1 era una orden real («qué hora es»); el resto, frases sueltas de conversaciones. También: secciones Guías y Preguntas y respuestas."},
-    {"fecha": "2026-11-19", "titulo": "Reconexión tras reiniciarse el robot",
-     "texto": "El robot se apagó y reinició; después respondía al ping pero wire-pod recibía 401 y timeouts: seguía usando la conexión gRPC anterior, ya inválida. Solución: /api-sdk/disconnect la descarta y la siguiente llamada la recrea (volvió al instante). La web lo hace sola si ve el robot en la red sin respuesta, y añade un botón «Reconectar» con diagnóstico paso a paso (wire-pod → robot en la red → conexión)."},
-    {"fecha": "2026-11-19", "titulo": "Voz de Vector y signos españoles",
-     "texto": "Su sintetizador (inglés) lee mal ¿, ¡ y las tildes. El cuadro Hablar los quita antes de enviar (á→a…, se mantiene la ñ y el ? final para la entonación) y las frases rápidas van sin ellos."},
-    {"fecha": "2026-11-19", "titulo": "Rediseño con la estética de Vector",
-     "texto": "Negro profundo, grafito y ojos verdes que brillan; tipografía geométrica fina (Quicksand) y toques dorados. La portada es su cara: los ojos parpadean, miran al puntero y curiosean, sonríen al conectar o al hacer clic, se balancean mientras habla, se concentran con la cámara y duermen (zzz) si está desconectado. Dos pestañas: Robot (interactivo) y Proyecto (telemetría, registro de voz, estadísticas, fases, guías, preguntas, memoria, Wi-Fi y ficha)."},
-    {"fecha": "2026-11-19", "titulo": "Apagones por batería y porcentaje fiable",
-     "texto": "Se apagó tres veces (12:15, 12:51, 13:02). La telemetría lo explica: en la base marcaba 3,56 V (≈6 %) sin estar cargando, y fuera de la base el firmware da 0 V y un «nivel 3 = llena» falso. Ahora el % se calcula solo por voltaje (curva Li-ion, −0,1 V si está cargando), con barra, aviso de batería baja (<20 %) y gráfico en %. Si vuelve a quedarse en la base sin «cargando», revisar contactos y posición."},
-    {"fecha": "2026-11-19", "titulo": "Color de ojos sincronizado",
-     "texto": "Pulsar la cara de la web cambia el color de ojos del robot (los 7 presets de Anki vía /api-sdk/eye_color) y la web a la vez; también se puede elegir con las muestras de color. Al abrir, la web lee el color del robot (get_sdk_settings, incluido el personalizado) y toda la interfaz adopta ese color. El cambio se guarda en el robot."}
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Investigación y repositorio inicial",
+      "texto": "Estado del ecosistema tras el cierre de Anki: wire-pod como servidor local, SDKs Python/Go/.NET, WireOS como firmware comunitario. Creado el repositorio con 7 documentos, catálogo de recursos y script de clonado (Windows necesita core.longpaths para wire-os-victor)."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Instalación de wire-pod",
+      "texto": "Instalador v1.2.18 (sin firma digital; SmartScreen). La descarga del modelo de voz desde GitHub se quedó en 0 bytes con la conexión del móvil: se instaló a mano desde alphacephei.com en %APPDATA%\\wire-pod\\vosk\\models\\es-ES\\model."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "La batalla de la Wi-Fi",
+      "texto": "Vector solo usa 2,4 GHz. El punto de acceso del POCO M6 Pro iba a 5 GHz sin opción de cambiarlo; se probó compartir por USB + zona Wi-Fi de Windows y al final se usó la red de casa (Movistar Wi-Fi 6 emite ambas bandas con el mismo nombre)."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Bluetooth: Chrome no conecta",
+      "texto": "wp.pvic.xyz se quedaba en la selección del robot sin error (el código traga el fallo de conexión GATT). Con Python/bleak sí conectaba (RSSI -32). Se creó tools/vector-ble-cli reutilizando el protocolo de DDL con el paquete webbluetooth para Node."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Modo emparejamiento",
+      "texto": "Descubrimiento clave: la pantalla anki.com/v no implica modo emparejamiento. El robot lo anuncia con 'p' en el 4º byte de manufacturer data (f8057670); se activa con doble pulsación y dura ~1 min. Se corrigió además la lectura de búferes en Node (byteOffset) y el orden de suscripción."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Firmware ep y activación",
+      "texto": "PIN → wifi-connect → ota-start 2.0.1.6086ep (100 %) → reinicio → anki-auth con el token de wire-pod: AuthorizedAsSecondary. wire-pod registra el robot (<nº de serie>, <IP del robot>, activated)."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Web del proyecto",
+      "texto": "Panel local con telemetría, estadísticas, controles, fases y este diario. Protocolo de cambio de red con vector-ble-cli --wifi."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Primera orden de voz en castellano",
+      "texto": "«Hey Vector… ¿qué hora es?» funciona: wake word → wire-pod → Vosk es-ES → intent → respuesta del robot. Cadena de voz completa validada."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Ensayo del protocolo de cambio de Wi-Fi",
+      "texto": "Base → doble pulsación → node index.js --wifi \"MI-WIFI\" … → PIN. Reconectó sin incidencias, wire-pod lo siguió viendo en <IP del robot> y la web continuó en línea. Fase 2 cerrada; listo para el cambio de red real."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Cámara en directo y cierre de la Fase 3",
+      "texto": "wire-pod emite la cámara como MJPEG en /cam-stream; server.py lo reenvía trozo a trozo. ~4 fotogramas/s a 640×360. La web añade botón de encender/apagar y «Guardar captura». También: cuadro Hablar con frases rápidas e historial, y soporte del nivel de batería cuando el firmware no da voltaje (solo lo da en la base)."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Control remoto",
+      "texto": "Junto a la cámara: «Tomar control» (wire-pod mantiene el control hasta liberarlo), cruceta de ruedas, cabeza y brazo con mantener pulsado, velocidad 40–200 mm/s, teclado (flechas/WASD, R/F, T/G, espacio) y captura. «Modo libre» devuelve la autonomía. Seguridad: se para al soltar, al perder el foco la pestaña y se libera al cerrar la web."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "SDK de Python funcionando",
+      "texto": "Python 3.12 junto al 3.14 y entorno .venv. El asistente oficial fallaba («cert does not exist»: wire-pod no tenía el certificado de DDL); scripts/configurar_sdk.py lo lee del propio robot por TLS. hola_vector.py: conecta, toma control, habla, mueve y hace foto. pantalla.py: imágenes y GIF en la cara (184×96)."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Registro de «Hey Vector», guías y preguntas",
+      "texto": "wire-pod solo guarda en memoria las 50 últimas órdenes (/api/get_logs); server.py las copia cada 10 s a web/data/voz.jsonl (fuera de Git). La web muestra cuántas hay, % entendidas, órdenes más usadas y la lista filtrable. Primer dato: de 7 activaciones solo 1 era una orden real («qué hora es»); el resto, frases sueltas de conversaciones. También: secciones Guías y Preguntas y respuestas."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Reconexión tras reiniciarse el robot",
+      "texto": "El robot se apagó y reinició; después respondía al ping pero wire-pod recibía 401 y timeouts: seguía usando la conexión gRPC anterior, ya inválida. Solución: /api-sdk/disconnect la descarta y la siguiente llamada la recrea (volvió al instante). La web lo hace sola si ve el robot en la red sin respuesta, y añade un botón «Reconectar» con diagnóstico paso a paso (wire-pod → robot en la red → conexión)."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Voz de Vector y signos españoles",
+      "texto": "Su sintetizador (inglés) lee mal ¿, ¡ y las tildes. El cuadro Hablar los quita antes de enviar (á→a…, se mantiene la ñ y el ? final para la entonación) y las frases rápidas van sin ellos."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Rediseño con la estética de Vector",
+      "texto": "Negro profundo, grafito y ojos verdes que brillan; tipografía geométrica fina (Quicksand) y toques dorados. La portada es su cara: los ojos parpadean, miran al puntero y curiosean, sonríen al conectar o al hacer clic, se balancean mientras habla, se concentran con la cámara y duermen (zzz) si está desconectado. Dos pestañas: Robot (interactivo) y Proyecto (telemetría, registro de voz, estadísticas, fases, guías, preguntas, memoria, Wi-Fi y ficha)."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Apagones por batería y porcentaje fiable",
+      "texto": "Se apagó tres veces (12:15, 12:51, 13:02). La telemetría lo explica: en la base marcaba 3,56 V (≈6 %) sin estar cargando, y fuera de la base el firmware da 0 V y un «nivel 3 = llena» falso. Ahora el % se calcula solo por voltaje (curva Li-ion, −0,1 V si está cargando), con barra, aviso de batería baja (<20 %) y gráfico en %. Si vuelve a quedarse en la base sin «cargando», revisar contactos y posición."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Color de ojos sincronizado",
+      "texto": "Pulsar la cara de la web cambia el color de ojos del robot (los 7 presets de Anki vía /api-sdk/eye_color) y la web a la vez; también se puede elegir con las muestras de color. Al abrir, la web lee el color del robot (get_sdk_settings, incluido el personalizado) y toda la interfaz adopta ese color. El cambio se guarda en el robot."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Luces: espalda no, cubo sí",
+      "texto": "La API externa del robot no tiene órdenes para las luces de la espalda (solo las usan sus animaciones internas): personalizarlas exige firmware propio (RainbOS/ClaudOS, Fase 8). El cubo sí: 4 luces RGB por esquina con SetCubeLights. examples/python/cubo.py listo; primera prueba sin conexión porque el cubo no tenía pila."
+    }
   ],
   "protocolo_wifi": [
     "Conecta el PC a la red nueva y comprueba en Windows que es «Red privada» (Configuración → Red → propiedades). Si es pública, el firewall puede bloquear a wire-pod.",
@@ -81,43 +176,60 @@
     "Verifica en esta web que el estado pasa a «En línea». Prueba: «Hey Vector, ¿qué hora es?»."
   ],
   "guias": [
-    {"titulo": "SDK de Python: puesta en marcha",
-     "intro": "Programar a Vector desde el PC. Ya está instalado y configurado en este equipo; estos pasos sirven para repetirlo en otro.",
-     "pasos": [
-       "Instalar Python 3.12 (el SDK no funciona con 3.13+): winget install Python.Python.3.12 --scope user",
-       "Crear el entorno del proyecto: py -3.12 -m venv .venv",
-       "Instalar el SDK de wire-pod: .venv\\Scripts\\python.exe -m pip install -U pip wirepod_vector_sdk",
-       "Configurarlo (robot encendido y wire-pod abierto): .venv\\Scripts\\python.exe scripts\\configurar_sdk.py",
-       "Probarlo: .venv\\Scripts\\python.exe examples\\python\\hola_vector.py"
-     ],
-     "nota": "El asistente oficial (python -m anki_vector.configure) falla con «cert does not exist» porque pide el certificado a wire-pod y este solo lo tiene si lo descargó de DDL. configurar_sdk.py lo lee directamente del robot. Hay que relanzarlo si cambia la IP del robot."},
-    {"titulo": "Ejemplos del SDK",
-     "intro": "Desde la carpeta del proyecto:",
-     "pasos": [
-       ".venv\\Scripts\\python.exe examples\\python\\hola_vector.py — batería, habla, mueve cabeza y brazo y guarda una foto",
-       ".venv\\Scripts\\python.exe examples\\python\\pantalla.py — muestra «¡Hola!» en su cara",
-       ".venv\\Scripts\\python.exe examples\\python\\pantalla.py foto.jpg 8 — una imagen durante 8 segundos",
-       ".venv\\Scripts\\python.exe examples\\python\\pantalla.py animacion.gif 3 — un GIF animado, 3 vueltas"
-     ],
-     "nota": "pantalla.py adapta cualquier imagen a 184×96 sin deformarla (bandas negras si la proporción no coincide)."},
-    {"titulo": "Pendiente para cerrar la Fase 5",
-     "intro": "El 30 % que falta:",
-     "pasos": [
-       "Comportamientos que reaccionan a eventos: saludar por su nombre a quien reconoce, reaccionar a las caricias…",
-       "Llevar la pantalla a esta web: subir una imagen o GIF y que aparezca en su cara."
-     ],
-     "nota": ""}
+    {
+      "titulo": "SDK de Python: puesta en marcha",
+      "intro": "Programar a Vector desde el PC. Ya está instalado y configurado en este equipo; estos pasos sirven para repetirlo en otro.",
+      "pasos": [
+        "Instalar Python 3.12 (el SDK no funciona con 3.13+): winget install Python.Python.3.12 --scope user",
+        "Crear el entorno del proyecto: py -3.12 -m venv .venv",
+        "Instalar el SDK de wire-pod: .venv\\Scripts\\python.exe -m pip install -U pip wirepod_vector_sdk",
+        "Configurarlo (robot encendido y wire-pod abierto): .venv\\Scripts\\python.exe scripts\\configurar_sdk.py",
+        "Probarlo: .venv\\Scripts\\python.exe examples\\python\\hola_vector.py"
+      ],
+      "nota": "El asistente oficial (python -m anki_vector.configure) falla con «cert does not exist» porque pide el certificado a wire-pod y este solo lo tiene si lo descargó de DDL. configurar_sdk.py lo lee directamente del robot. Hay que relanzarlo si cambia la IP del robot."
+    },
+    {
+      "titulo": "Ejemplos del SDK",
+      "intro": "Desde la carpeta del proyecto:",
+      "pasos": [
+        ".venv\\Scripts\\python.exe examples\\python\\hola_vector.py — batería, habla, mueve cabeza y brazo y guarda una foto",
+        ".venv\\Scripts\\python.exe examples\\python\\pantalla.py — muestra «¡Hola!» en su cara",
+        ".venv\\Scripts\\python.exe examples\\python\\pantalla.py foto.jpg 8 — una imagen durante 8 segundos",
+        ".venv\\Scripts\\python.exe examples\\python\\pantalla.py animacion.gif 3 — un GIF animado, 3 vueltas",
+        ".venv\\Scripts\\python.exe examples\\python\\cubo.py — luces del cubo: demo arcoíris, un color (rojo, azul, #ff00aa…) u off"
+      ],
+      "nota": "pantalla.py adapta cualquier imagen a 184×96 sin deformarla (bandas negras si la proporción no coincide)."
+    },
+    {
+      "titulo": "Pendiente para cerrar la Fase 5",
+      "intro": "El 30 % que falta:",
+      "pasos": [
+        "Comportamientos que reaccionan a eventos: saludar por su nombre a quien reconoce, reaccionar a las caricias…",
+        "Llevar la pantalla a esta web: subir una imagen o GIF y que aparezca en su cara."
+      ],
+      "nota": ""
+    }
   ],
   "faq": [
-    {"pregunta": "¿Funciona Vector sin el portátil encendido?",
-     "respuesta": "Solo en parte. Sin wire-pod sigue moviéndose, explorando, reconociendo caras, jugando con el cubo y yendo a cargarse, y detecta «Hey Vector»; pero no entiende lo que le dices y la web y el SDK no funcionan. Para tenerlo siempre disponible: wire-pod en un equipo siempre encendido (Raspberry Pi, Fase 6, en standby) copiando la carpeta %APPDATA%\\wire-pod o reautenticando con anki-auth."},
-    {"pregunta": "¿Puede mandar la voz directamente a ChatGPT o Claude?",
-     "respuesta": "No directamente: su firmware solo habla el protocolo de Anki con un servidor fijo (escapepod.local) y no sabe usar claves de API; cambiarlo exige firmware propio (Fase 8). Pero wire-pod ya hace de intermediario: con «Knowledge graph» envía a un LLM lo que no sea un comando conocido y Vector dice la respuesta. Admite OpenAI, Together y servicios compatibles con OpenAI; para Claude haría falta un pequeño puente. Se paga por uso (céntimos al mes con uso normal). Fase 4, por decidir."},
-    {"pregunta": "Si le doy un mapa de la casa, ¿puede recorrerla o saber dónde está?",
-     "respuesta": "No puede cargar un plano. Sabe dónde está respecto a donde empezó (odometría), pero se «pierde» si lo levantan; crea un mini-mapa local de obstáculos (nav_map, alcance ~2 m) y se orienta con marcas impresas (las de su base y cubo, y marcas propias con define_custom_wall). Lo realista: marcas impresas en cada habitación, rutas de patrulla con go_to_pose y la web mostrando en qué zona está. Límites: 30–45 min de batería, umbrales y alfombras, error acumulado y una sola planta. Proyecto para la Fase 7."},
-    {"pregunta": "¿Se pueden mostrar imágenes propias en su cara?",
-     "respuesta": "Sí, sin tocar el firmware: con el SDK (set_screen_with_image_data). Ya funciona con examples/python/pantalla.py (imágenes y GIF a 184×96). Siguiente paso: un cuadro en esta web para subirlas."},
-    {"pregunta": "¿Se pueden sacar sus animaciones y el logo de Anki? ¿Y cambiarlos?",
-     "respuesta": "En parte. En el repositorio os-vector/wire-os-victor están la animación de arranque con el logo (resources/config/engine/animations/boot_anim.raw, fotogramas RGB565; boot_anim_20.raw para el 2.0) y unos 120 iconos PNG (emparejamiento, batería…). Los ojos no son imágenes: se dibujan por código en vic-anim. Cambiar el arranque es posible (si existe /persist/boot_anim.raw lo usa en lugar del de Anki), pero requiere SSH, es decir, robot desbloqueado (Fase 8). Son recursos de Anki/DDL: uso personal sí, no subirlos al repositorio público."}
+    {
+      "pregunta": "¿Funciona Vector sin el portátil encendido?",
+      "respuesta": "Solo en parte. Sin wire-pod sigue moviéndose, explorando, reconociendo caras, jugando con el cubo y yendo a cargarse, y detecta «Hey Vector»; pero no entiende lo que le dices y la web y el SDK no funcionan. Para tenerlo siempre disponible: wire-pod en un equipo siempre encendido (Raspberry Pi, Fase 6, en standby) copiando la carpeta %APPDATA%\\wire-pod o reautenticando con anki-auth."
+    },
+    {
+      "pregunta": "¿Puede mandar la voz directamente a ChatGPT o Claude?",
+      "respuesta": "No directamente: su firmware solo habla el protocolo de Anki con un servidor fijo (escapepod.local) y no sabe usar claves de API; cambiarlo exige firmware propio (Fase 8). Pero wire-pod ya hace de intermediario: con «Knowledge graph» envía a un LLM lo que no sea un comando conocido y Vector dice la respuesta. Admite OpenAI, Together y servicios compatibles con OpenAI; para Claude haría falta un pequeño puente. Se paga por uso (céntimos al mes con uso normal). Fase 4, por decidir."
+    },
+    {
+      "pregunta": "Si le doy un mapa de la casa, ¿puede recorrerla o saber dónde está?",
+      "respuesta": "No puede cargar un plano. Sabe dónde está respecto a donde empezó (odometría), pero se «pierde» si lo levantan; crea un mini-mapa local de obstáculos (nav_map, alcance ~2 m) y se orienta con marcas impresas (las de su base y cubo, y marcas propias con define_custom_wall). Lo realista: marcas impresas en cada habitación, rutas de patrulla con go_to_pose y la web mostrando en qué zona está. Límites: 30–45 min de batería, umbrales y alfombras, error acumulado y una sola planta. Proyecto para la Fase 7."
+    },
+    {
+      "pregunta": "¿Se pueden mostrar imágenes propias en su cara?",
+      "respuesta": "Sí, sin tocar el firmware: con el SDK (set_screen_with_image_data). Ya funciona con examples/python/pantalla.py (imágenes y GIF a 184×96). Siguiente paso: un cuadro en esta web para subirlas."
+    },
+    {
+      "pregunta": "¿Se pueden sacar sus animaciones y el logo de Anki? ¿Y cambiarlos?",
+      "respuesta": "En parte. En el repositorio os-vector/wire-os-victor están la animación de arranque con el logo (resources/config/engine/animations/boot_anim.raw, fotogramas RGB565; boot_anim_20.raw para el 2.0) y unos 120 iconos PNG (emparejamiento, batería…). Los ojos no son imágenes: se dibujan por código en vic-anim. Cambiar el arranque es posible (si existe /persist/boot_anim.raw lo usa en lugar del de Anki), pero requiere SSH, es decir, robot desbloqueado (Fase 8). Son recursos de Anki/DDL: uso personal sí, no subirlos al repositorio público."
+    }
   ]
 }
