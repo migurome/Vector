@@ -106,7 +106,27 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def stream_camara(self):
+        """Reenvía el MJPEG de wire-pod trozo a trozo hasta que el navegador cierre."""
+        try:
+            up = urllib.request.urlopen(WIREPOD + self.path, timeout=30)
+        except Exception as e:
+            return self.enviar(502, f"error: {e}".encode(), "text/plain")
+        with up:
+            self.send_response(200)
+            self.send_header("Content-Type", up.headers.get("Content-Type", "multipart/x-mixed-replace; boundary=--boundary"))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            try:
+                while chunk := up.read1(65536):
+                    self.wfile.write(chunk)
+                    self.wfile.flush()
+            except (ConnectionError, TimeoutError, OSError):
+                pass  # el navegador ha cerrado o el robot ha dejado de enviar
+
     def do_GET(self):
+        if self.path.startswith("/cam-stream"):
+            return self.stream_camara()
         if self.path.startswith("/api-sdk/"):
             st, body, ct = wirepod(self.path)
             return self.enviar(st, body, ct)
