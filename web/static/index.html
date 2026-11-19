@@ -413,6 +413,19 @@ function pctOf(s) {
   if (s.voltios > 0) return batteryPct(s.voltios, s.cargando);
   return null;
 }
+// Fuera de la base el firmware congela voltaje y nivel (3,938 V idénticos 30 min en la prueba del
+// 2026-11-19): el % se estima por el tiempo fuera, con la autonomía medida ese día.
+const AUTONOMIA_MIN = 30;  // shortcut: medida en una sola prueba; repetirla si cambia la batería
+function estimarSerie(list) {
+  let salidaT = null, salidaPct = null, ultimoBase = null;
+  return list.map((s) => {
+    if (!s.online) return null;
+    if (s.en_base) { salidaT = null; ultimoBase = pctOf(s); return ultimoBase; }
+    if (salidaT === null) { salidaT = s.t; salidaPct = ultimoBase; }  // primera muestra fuera
+    if (salidaPct === null) return null;  // salió antes de que empezara el registro: no se sabe
+    return Math.max(0, Math.round(salidaPct - (s.t - salidaT) / 60 / AUTONOMIA_MIN * 100));
+  });
+}
 function batteryWarn(pct, enBase) {
   let el = $("#batwarn");
   if (!el) { el = document.createElement("div"); el.id = "batwarn"; el.className = "card"; el.setAttribute("role", "alert");
@@ -600,15 +613,23 @@ async function loadTelemetria() {
   const lastOn = [...samples].reverse().find((s) => s.online);
   // % solo a partir del voltaje: fuera de la base este firmware da 0 V y un «nivel 3» que no es fiable
   // (se ha apagado varias veces mientras decía «llena»). Se usa la última lectura con voltaje.
-  const lastV = [...samples].reverse().find((s) => pctOf(s) !== null);
+  // la estimación necesita la historia (cuándo salió de la base): se calcula sobre la serie completa de 24 h
+  const hist = samples.length && horas >= 24 ? samples : await api("/telemetria?horas=24").catch(() => samples);
+  const est = estimarSerie(hist);
+  let iV = est.length - 1;
+  while (iV >= 0 && est[iV] === null) iV--;
+  const lastV = iV >= 0 ? hist[iV] : null;
   if (lastV) {
-    const pct = pctOf(lastV);
+    const pct = est[iV];
     const ageMin = Math.round((Date.now() / 1000 - lastV.t) / 60);
     const fresh = lastOn && lastOn.t === lastV.t;
     const full = lastV.en_base && !lastV.cargando && lastV.nivel === 3;
-    $("#t-bat").innerHTML = `${pct} %<div class="bar" style="margin-top:6px"><i style="width:${pct}%;${pct < 20 ? "background:var(--crit);box-shadow:none" : ""}"></i></div>`;
-    $("#t-bat-s").textContent = (full ? "Carga completa · en la base" : `${lastV.voltios.toFixed(2)} V${lastV.cargando ? " · cargando (estimado)" : ""}`) +
-      (fresh ? "" : ` · dato de hace ${ageMin} min (fuera de la base no informa)`);
+    const fuera = !lastV.en_base;
+    $("#t-bat").innerHTML = `${fuera ? "≈ " : ""}${pct} %<div class="bar" style="margin-top:6px"><i style="width:${pct}%;${pct < 20 ? "background:var(--crit);box-shadow:none" : ""}"></i></div>`;
+    $("#t-bat-s").textContent = (full ? "Carga completa · en la base"
+      : fuera ? `Estimado por el tiempo fuera de la base (autonomía ≈ ${AUTONOMIA_MIN} min)`
+      : `${lastV.voltios.toFixed(2)} V${lastV.cargando ? " · cargando (estimado)" : ""}`) +
+      (fresh ? "" : ` · dato de hace ${ageMin} min`);
     batteryWarn(pct, lastV.cargando || lastV.en_base);
   } else if (lastOn) {
     $("#t-bat").textContent = "¿?";
@@ -635,8 +656,9 @@ function drawChart() {
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const t1 = Date.now() / 1000, t0 = t1 - horas * 3600;
   // % de batería estimado por voltaje; solo muestras con voltaje (el «nivel» del robot no es fiable)
-  const val = pctOf;
-  const on = samples.filter((s) => pctOf(s) !== null);
+  const estMap = new Map(estimarSerie(samples).map((p, i) => [samples[i], p]));
+  const val = (s) => estMap.get(s);
+  const on = samples.filter((s) => val(s) !== null && val(s) !== undefined);
   $("#charttitle").textContent = "Batería (%)";
   const vmin = 0, vmax = 100;
   const x = (t) => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
@@ -680,7 +702,7 @@ function drawChart() {
     $("#xh").setAttribute("x1", cx); $("#xh").setAttribute("x2", cx); $("#xh").setAttribute("visibility", "visible");
     $("#xd").setAttribute("cx", cx); $("#xd").setAttribute("cy", cy); $("#xd").setAttribute("visibility", "visible");
     const tip = $("#tip");
-    tip.innerHTML = `${fmtT(s.t)} · <b>${val(s)} %</b> (${s.en_base && !s.cargando && s.nivel === 3 ? "carga completa" : s.voltios.toFixed(2) + " V"}) · ${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
+    tip.innerHTML = `${fmtT(s.t)} · <b>${val(s)} %</b> (${!s.en_base ? "estimado por tiempo" : !s.cargando && s.nivel === 3 ? "carga completa" : s.voltios.toFixed(2) + " V"}) ·${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
     tip.style.left = (cx * r.width / W) + "px"; tip.style.top = (cy * r.height / H) + "px"; tip.style.display = "block";
   };
   svg.onmouseleave = () => { $("#tip").style.display = "none"; $("#xh")?.setAttribute("visibility", "hidden"); $("#xd")?.setAttribute("visibility", "hidden"); };

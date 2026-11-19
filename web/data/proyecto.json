@@ -177,6 +177,11 @@
       "fecha": "2026-11-19",
       "titulo": "Fase 5: reacciones y pantalla en la web",
       "texto": "reacciones.py escucha los eventos de caras (nombre y expresión) y el sensor de caricias; toma el control solo un instante para hablar y usa esperas para no repetirse. La web tiene «Su pantalla»: subir imagen/GIF o escribir un texto (en el color de los ojos), con vista previa a 184×96; server.py recibe la imagen y lanza pantalla.py con el Python del proyecto. Probado: «Hola!» en su cara en ~7 s."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Prueba de autonomía: 30 minutos",
+      "texto": "Salió de la base al 100 % a las 14:55 y volvió él solo a cargar a las 15:25 (3,57 V, nivel 1), sin apagarse. Descubrimiento: fuera de la base el robot congela voltaje y nivel (3,938 V idénticos los 30 min); solo los actualiza al entrar o salir de la base. La web estima ahora el % fuera de la base por el tiempo transcurrido con esa autonomía. 30 min sugiere algo de desgaste en una batería de 2018 (cifra de referencia para un Vector nuevo no confirmada)."
     }
   ],
   "protocolo_wifi": [
@@ -250,6 +255,10 @@
     {
       "pregunta": "¿Se puede apagar el robot desde la web?",
       "respuesta": "No del todo: su API no tiene orden de apagado (solo «actualizar y reiniciar» para OTA). La web ofrece «Dormir»: deja de moverse y queda en reposo hasta que le dices «Hey Vector» o lo tocas. Para apagarlo de verdad, mantener pulsado el botón de la espalda fuera de la base."
+    },
+    {
+      "pregunta": "¿Cuánto dura la batería y cómo sé si está gastada?",
+      "respuesta": "Medido el 2026-11-19: unos 30 minutos fuera de la base, desde el 100 % hasta que vuelve solo a cargar. Fuera de la base el robot no actualiza el dato de batería, así que la web lo estima por el tiempo fuera. No conviene descargarla a fondo como «mantenimiento»: en baterías de litio acelera el desgaste. Si la autonomía baja mucho, la batería se puede cambiar (guías en iFixit); repetir la prueba de vez en cuando permite ver la tendencia."
     }
   ]
 }
