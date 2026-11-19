@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vector Hub</title>
+<style>
+:root{
+  --page:#f9f9f7; --surface:#fcfcfb; --card:#ffffff; --line:#e4e3de; --grid:#ecebe7;
+  --text:#0b0b0b; --text2:#52514e; --muted:#8a8984;
+  --series:#2a78d6; --series-soft:#cde2fb; --off:#ecebe7;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --good-text:#006300; --crit-text:#a32424;
+  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --page:#0d0d0d; --surface:#1a1a19; --card:#161615; --line:#2c2c2a; --grid:#262624;
+  --text:#f0efec; --text2:#c3c2b7; --muted:#8d8c86;
+  --series:#3987e5; --series-soft:#1c3a5e; --off:#2a2a28;
+  --good-text:#5fd35f; --crit-text:#f08a8a;
+}}
+:root[data-theme="dark"]{
+  --page:#0d0d0d; --surface:#1a1a19; --card:#161615; --line:#2c2c2a; --grid:#262624;
+  --text:#f0efec; --text2:#c3c2b7; --muted:#8d8c86;
+  --series:#3987e5; --series-soft:#1c3a5e; --off:#2a2a28;
+  --good-text:#5fd35f; --crit-text:#f08a8a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--page);border-bottom:1px solid var(--line)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.top{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em}
+.brand small{font-weight:400;color:var(--text2);margin-left:6px}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+nav a{color:var(--text2);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:14px}
+nav a:hover{background:var(--card);color:var(--text)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600}
+.pill .dot{width:8px;height:8px;border-radius:50%}
+main{padding:20px 0 60px}
+section{margin:0 0 28px;scroll-margin-top:70px}
+h2{font-size:17px;margin:0 0 12px;letter-spacing:-.01em}
+h2 small{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
+.grid{display:grid;gap:12px}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.two{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);min-width:0}
+.tile .k{color:var(--text2);font-size:13px}
+.tile .v{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:2px 0}
+.tile .s{color:var(--muted);font-size:13px}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:0}
+dt{color:var(--text2)} dd{margin:0;overflow-wrap:anywhere}
+.chart{position:relative}
+.chart svg{width:100%;height:240px;display:block}
+.chart .tip{position:absolute;pointer-events:none;background:var(--text);color:var(--page);font-size:12px;padding:6px 8px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);display:none}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);color:var(--text2);padding:4px 10px;cursor:pointer;font:inherit;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--text);color:var(--page)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.spacer{flex:1}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:6px 4px;border-bottom:1px solid var(--grid);text-align:left}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--grid);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--series);border-radius:4px}
+.phase{display:grid;grid-template-columns:44px 1fr 52px;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--grid)}
+.phase:last-child{border-bottom:0}
+.phase .id{font-weight:700;color:var(--text2)}
+.phase .pc{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.phase .d{grid-column:2/4;color:var(--text2);font-size:13px}
+.timeline{list-style:none;margin:0;padding:0;border-left:2px solid var(--line)}
+.timeline li{position:relative;padding:0 0 16px 18px}
+.timeline li::before{content:"";position:absolute;left:-6px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--series);border:2px solid var(--page)}
+.timeline .f{color:var(--muted);font-size:12px}
+.timeline b{display:block}
+.timeline p{margin:2px 0 0;color:var(--text2);font-size:14px}
+ol.steps{margin:0;padding-left:22px} ol.steps li{margin:0 0 8px}
+code{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:var(--grid);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+button.btn,input,select{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;padding:7px 12px}
+button.btn{cursor:pointer;font-weight:600}
+button.btn:hover{border-color:var(--text2)}
+button.btn:disabled{opacity:.5;cursor:not-allowed}
+input{flex:1;min-width:160px}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.photos img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in;background:var(--grid)}
+.empty{color:var(--muted);font-size:14px}
+.note{color:var(--muted);font-size:13px;margin-top:8px}
+.msg{font-size:13px;color:var(--text2);min-height:1.5em}
+:focus-visible{outline:2px solid var(--series);outline-offset:2px}
+@media (max-width:600px){nav{display:none}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+  <div class="brand">Vector Hub<small id="botname">—</small></div>
+  <span class="pill" id="status" role="status"><span class="dot"></span><span>Cargando…</span></span>
+  <nav>
+    <a href="#estado">Estado</a><a href="#hablar">Hablar</a><a href="#telemetria">Telemetría</a><a href="#vida">Estadísticas</a>
+    <a href="#control">Control</a><a href="#fases">Fases</a><a href="#memoria">Memoria</a><a href="#wifi">Cambio de Wi-Fi</a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <section id="estado">
+    <h2>Estado del robot <small id="updated"></small></h2>
+    <div class="grid tiles">
+      <div class="card tile"><div class="k">Batería</div><div class="v" id="t-bat">—</div><div class="s" id="t-bat-s">&nbsp;</div></div>
+      <div class="card tile"><div class="k">Carga</div><div class="v" id="t-chg">—</div><div class="s" id="t-chg-s">&nbsp;</div></div>
+      <div class="card tile"><div class="k">Disponibilidad (24 h)</div><div class="v" id="t-up">—</div><div class="s" id="t-up-s">&nbsp;</div></div>
+      <div class="card tile"><div class="k">Red</div><div class="v" id="t-ip" style="font-size:22px">—</div><div class="s" id="t-ip-s">&nbsp;</div></div>
+    </div>
+  </section>
+
+  <section id="hablar" class="card">
+    <h2>Hablar <small>Vector dice lo que escribas (máx. 300 caracteres)</small></h2>
+    <div class="row" style="margin-bottom:10px">
+      <input id="saytext" placeholder="Escribe una frase y pulsa Enter" maxlength="300" aria-label="Texto para que lo diga Vector">
+      <button class="btn" id="saybtn">Decir</button>
+    </div>
+    <div class="row" id="quick" aria-label="Frases rápidas"></div>
+    <div class="msg" id="saymsg" aria-live="polite"></div>
+    <div id="sayhist" class="note"></div>
+  </section>
+
+  <section class="grid two">
+    <div class="card"><h2>Ficha del robot</h2><dl id="ficha"></dl></div>
+    <div class="card"><h2>Avance del proyecto</h2>
+      <div class="tile"><div class="v" id="global">—</div><div class="s">avance global medio de las fases</div></div>
+      <div class="bar" style="margin:10px 0 14px"><i id="globalbar" style="width:0"></i></div>
+      <div id="miniphases"></div>
+    </div>
+  </section>
+
+  <section id="telemetria" class="card">
+    <div class="row" style="margin-bottom:8px">
+      <h2 style="margin:0" id="charttitle">Voltaje de batería</h2><span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Periodo">
+        <button data-h="6">6 h</button><button data-h="24" aria-pressed="true">24 h</button><button data-h="168">7 días</button>
+      </div>
+      <button class="btn" id="tablebtn" aria-expanded="false">Ver tabla</button>
+    </div>
+    <div class="chart"><svg id="chart" role="img" aria-label="Voltaje de batería en el tiempo"></svg><div class="tip" id="tip"></div></div>
+    <div class="note">Una muestra por minuto mientras la web está abierta en el PC. Zonas grises: robot sin conexión. Referencia: ~3,6 V baja · ~4,1 V llena.</div>
+    <div id="tablewrap" hidden style="max-height:260px;overflow:auto;margin-top:10px"><table id="ttable"></table></div>
+  </section>
+
+  <section id="vida">
+    <div class="row" style="margin-bottom:12px"><h2 style="margin:0">Estadísticas de vida</h2><span class="spacer"></span><button class="btn" id="statsbtn">Cargar del robot</button></div>
+    <div class="grid tiles" id="lifetiles"></div>
+    <div class="card" style="margin-top:12px"><table id="lifetable"><tr><td class="empty">Pulsa «Cargar del robot» con el robot en línea.</td></tr></table></div>
+  </section>
+
+  <section class="grid two">
+    <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Caras conocidas</h2><span class="spacer"></span><button class="btn" id="facesbtn">Cargar</button></div><div id="faces" class="empty">—</div></div>
+    <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Fotos</h2><span class="spacer"></span><button class="btn" id="photosbtn">Cargar</button></div><div id="photos" class="photos"><span class="empty">Dile «Hey Vector, hazme una foto».</span></div></div>
+  </section>
+
+  <section id="control" class="card">
+    <h2>Control rápido</h2>
+    <div class="row">
+      <button class="btn" data-act="headup">Cabeza ↑</button><button class="btn" data-act="headdown">Cabeza ↓</button>
+      <button class="btn" data-act="liftup">Brazo ↑</button><button class="btn" data-act="liftdown">Brazo ↓</button>
+      <button class="btn" data-act="wake">Simular «Hey Vector»</button>
+      <label class="row" style="gap:6px">Volumen <select id="vol" aria-label="Volumen">
+        <option value="0">Silencio</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">Máx.</option>
+      </select></label>
+    </div>
+    <div class="msg" id="ctrlmsg" aria-live="polite"></div>
+  </section>
+
+  <section id="fases" class="card"><h2>Fases del proyecto</h2><div id="phases"></div></section>
+
+  <section class="grid two">
+    <div id="memoria" class="card"><h2>Memoria del proyecto</h2><ul class="timeline" id="timeline"></ul></div>
+    <div id="wifi" class="card"><h2>Protocolo de cambio de Wi-Fi</h2><ol class="steps" id="wifisteps"></ol>
+      <div class="note">Si algo falla: comprueba con <code>python scripts\ble_modo_emparejamiento.py</code> que el robot está en modo emparejamiento. Guía completa en <code>docs/08-cambio-de-wifi.md</code>.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtT = (t) => new Date(t * 1000).toLocaleString("es-ES", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"});
+const LEVEL = {0:"Desconocido", 1:"Baja", 2:"Normal", 3:"Llena"};
+let SERIAL = null, horas = 24, samples = [];
+
+async function api(path) {
+  const r = await fetch(path, {cache: "no-store"});
+  const txt = await r.text();
+  if (!r.ok || txt.startsWith("error")) throw new Error(txt.slice(0, 160) || r.status);
+  try { return JSON.parse(txt); } catch { return txt; }
+}
+const sdk = (ep, params = {}) => api(`/api-sdk/${ep}?` + new URLSearchParams({serial: SERIAL, ...params}));
+
+function setStatus(kind, text) {
+  const colors = {ok:"var(--good)", off:"var(--crit)", wp:"var(--warn)"};
+  const icons = {ok:"●", off:"✕", wp:"!"};
+  $("#status").innerHTML = `<span class="dot" style="background:${colors[kind]}"></span><span aria-hidden="true">${icons[kind]}</span><span>${esc(text)}</span>`;
+}
+
+/* ---------- Proyecto: ficha, fases, memoria, wifi ---------- */
+async function loadProyecto() {
+  const p = await api("/proyecto");
+  const r = p.robot;
+  $("#botname").textContent = r.nombre;
+  const rows = [["Nombre", r.nombre], ["Nº de serie", r.serie], ["Firmware", r.firmware], ["Origen", r.firmware_origen],
+    ["Hardware", r.hardware], ["Red", r.red], ["IP registrada", r.ip], ["Cuenta", r.estado_cuenta], ["Servidor", r.servidor], ["Voz", r.voz]];
+  $("#ficha").innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+  const avg = Math.round(p.fases.reduce((a, f) => a + f.avance, 0) / p.fases.length);
+  $("#global").textContent = avg + " %";
+  $("#globalbar").style.width = avg + "%";
+  const bar = (v) => `<div class="bar" role="progressbar" aria-valuenow="${v}" aria-valuemin="0" aria-valuemax="100"><i style="width:${v}%"></i></div>`;
+  $("#miniphases").innerHTML = p.fases.map((f) =>
+    `<div class="row" style="gap:10px;margin:4px 0;font-size:13px"><span style="width:26px;color:var(--text2)">${f.id}</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.nombre)}</span><span style="width:110px">${bar(f.avance)}</span><span style="width:38px;text-align:right">${f.avance}%</span></div>`).join("");
+  $("#phases").innerHTML = p.fases.map((f) =>
+    `<div class="phase"><span class="id">${f.id}</span><div><b>${esc(f.nombre)}</b>${bar(f.avance)}</div><span class="pc">${f.avance}%</span><span class="d">${esc(f.detalle)}</span></div>`).join("");
+  $("#timeline").innerHTML = p.memoria.map((m) =>
+    `<li><span class="f">${esc(m.fecha)}</span><b>${esc(m.titulo)}</b><p>${esc(m.texto)}</p></li>`).join("");
+  $("#wifisteps").innerHTML = p.protocolo_wifi.map((s) => `<li>${esc(s).replace(/(node index\.js.*$|http:\/\/localhost:8080)/g, "<code>$1</code>")}</li>`).join("");
+}
+
+/* ---------- Telemetría ---------- */
+async function loadTelemetria() {
+  try { samples = await api("/telemetria?horas=" + horas); } catch { samples = []; }
+  const last = samples[samples.length - 1];
+  if (!last) { setStatus("wp", "Sin datos aún"); return; }
+  SERIAL = last.esn || SERIAL;
+  $("#updated").textContent = "· última muestra " + fmtT(last.t);
+  if (!last.wirepod) setStatus("wp", "wire-pod apagado");
+  else if (!last.online) setStatus("off", "Robot sin conexión");
+  else setStatus("ok", "En línea");
+  const lastOn = [...samples].reverse().find((s) => s.online);
+  if (lastOn) {
+    const old = last.online ? "" : " (último dato)";
+    if (lastOn.voltios > 0) {
+      const pct = Math.max(0, Math.min(100, Math.round((lastOn.voltios - 3.6) / 0.5 * 100)));
+      $("#t-bat").textContent = `${lastOn.voltios.toFixed(2)} V`;
+      $("#t-bat-s").textContent = `${LEVEL[lastOn.nivel] ?? "—"} · ≈${pct} %` + old;
+    } else { // este firmware a veces no informa del voltaje: mostrar el nivel
+      $("#t-bat").textContent = LEVEL[lastOn.nivel] ?? "—";
+      $("#t-bat-s").textContent = `nivel ${lastOn.nivel ?? "?"} de 3 · sin dato de voltaje` + old;
+    }
+    $("#t-chg").textContent = lastOn.cargando ? "Cargando" : lastOn.en_base ? "En la base" : "Fuera de la base";
+    $("#t-chg-s").textContent = lastOn.cubo_voltios ? `Cubo: ${lastOn.cubo_voltios.toFixed(2)} V` : "Cubo: sin datos";
+  }
+  const day = samples.filter((s) => s.t >= Date.now() / 1000 - 86400);
+  if (day.length) {
+    const up = Math.round(day.filter((s) => s.online).length / day.length * 100);
+    $("#t-up").textContent = up + " %";
+    $("#t-up-s").textContent = `${day.length} muestras`;
+  }
+  $("#t-ip").textContent = last.ip || "—";
+  $("#t-ip-s").textContent = last.online ? "responde a wire-pod" : "registrada en wire-pod";
+  drawChart();
+  if (!$("#tablewrap").hidden) drawTable();
+}
+
+function drawChart() {
+  const svg = $("#chart"), W = svg.clientWidth || 800, H = 240, m = {l:44, r:12, t:12, b:26};
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const t1 = Date.now() / 1000, t0 = t1 - horas * 3600;
+  // Voltaje si el robot lo da; si no, nivel 1-3 (nunca ambos: un solo eje)
+  const useV = samples.some((s) => s.online && s.voltios > 0);
+  const val = (s) => useV ? s.voltios : s.nivel;
+  const on = samples.filter((s) => s.online && val(s) > 0);
+  $("#charttitle").textContent = useV ? "Voltaje de batería" : "Nivel de batería";
+  let vmin = useV ? 3.5 : 0.5, vmax = useV ? 4.2 : 3.5;
+  if (useV) on.forEach((s) => { vmin = Math.min(vmin, s.voltios - .05); vmax = Math.max(vmax, s.voltios + .05); });
+  const x = (t) => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
+  const y = (v) => m.t + (vmax - v) / (vmax - vmin) * (H - m.t - m.b);
+  let g = "";
+  const yt = useV ? [] : [1, 2, 3];
+  if (useV) for (let v = Math.ceil(vmin * 10) / 10; v <= vmax; v += .1) yt.push(v);
+  yt.forEach((v) => {
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>` +
+         `<text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${useV ? v.toFixed(1) : LEVEL[v]}</text>`;
+  });
+  const ticks = horas <= 24 ? 6 : 7;
+  for (let i = 0; i <= ticks; i++) {
+    const t = t0 + (t1 - t0) * i / ticks;
+    const lbl = new Date(t * 1000).toLocaleString("es-ES", horas <= 24 ? {hour:"2-digit", minute:"2-digit"} : {weekday:"short", day:"numeric"});
+    g += `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">${lbl}</text>`;
+  }
+  // zonas sin conexión: rectángulos entre muestras offline consecutivas
+  const step = 90;
+  samples.forEach((s, i) => {
+    if (s.online) return;
+    const nx = samples[i + 1] ? Math.min(samples[i + 1].t, s.t + step) : s.t + step;
+    g += `<rect x="${x(s.t)}" y="${m.t}" width="${Math.max(1, x(nx) - x(s.t))}" height="${H - m.t - m.b}" fill="var(--off)"/>`;
+  });
+  // línea, cortada donde hay huecos > 3 min
+  let d = "", prev = null;
+  on.forEach((s) => { d += (prev && s.t - prev.t < 180 ? "L" : "M") + x(s.t).toFixed(1) + "," + y(val(s)).toFixed(1); prev = s; });
+  g += `<path d="${d}" fill="none" stroke="var(--series)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  // puntos aislados (sin vecino a < 3 min) no forman línea: dibujarlos como marcador
+  on.forEach((s, i) => {
+    const near = (o) => o && Math.abs(o.t - s.t) < 180;
+    if (!near(on[i - 1]) && !near(on[i + 1])) g += `<circle cx="${x(s.t)}" cy="${y(val(s))}" r="4" fill="var(--series)" stroke="var(--surface)" stroke-width="2"/>`;
+  });
+  if (!on.length) g += `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" fill="var(--muted)" font-size="13">Sin datos del robot en este periodo</text>`;
+  g += `<line id="xh" y1="${m.t}" y2="${H - m.b}" stroke="var(--text2)" stroke-dasharray="3 3" visibility="hidden"/><circle id="xd" r="5" fill="var(--series)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+  svg.innerHTML = g;
+  svg.onmousemove = (e) => {
+    if (!on.length) return;
+    const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width;
+    const t = t0 + (px - m.l) / (W - m.l - m.r) * (t1 - t0);
+    const s = on.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a);
+    const cx = x(s.t), cy = y(val(s));
+    $("#xh").setAttribute("x1", cx); $("#xh").setAttribute("x2", cx); $("#xh").setAttribute("visibility", "visible");
+    $("#xd").setAttribute("cx", cx); $("#xd").setAttribute("cy", cy); $("#xd").setAttribute("visibility", "visible");
+    const tip = $("#tip");
+    tip.innerHTML = `${fmtT(s.t)} · <b>${useV ? s.voltios.toFixed(2) + " V" : "Batería " + LEVEL[s.nivel].toLowerCase()}</b> ·${s.cargando ? "cargando" : s.en_base ? "en base" : "fuera de base"}`;
+    tip.style.left = (cx * r.width / W) + "px"; tip.style.top = (cy * r.height / H) + "px"; tip.style.display = "block";
+  };
+  svg.onmouseleave = () => { $("#tip").style.display = "none"; $("#xh")?.setAttribute("visibility", "hidden"); $("#xd")?.setAttribute("visibility", "hidden"); };
+}
+
+function drawTable() {
+  const rows = samples.slice(-300).reverse().map((s) =>
+    `<tr><td>${fmtT(s.t)}</td><td>${s.online ? "✓ en línea" : "✕ sin conexión"}</td><td class="n">${s.voltios ? s.voltios.toFixed(2) + " V" : s.online ? LEVEL[s.nivel] ?? "—" : "—"}</td><td>${s.online ? (s.cargando ? "cargando" : s.en_base ? "en base" : "fuera") : "—"}</td></tr>`).join("");
+  $("#ttable").innerHTML = `<tr><th>Hora</th><th>Estado</th><th class="n">Voltaje</th><th>Base</th></tr>` + (rows || `<tr><td colspan="4" class="empty">Sin muestras</td></tr>`);
+}
+
+document.querySelectorAll(".seg button").forEach((b) => b.onclick = () => {
+  document.querySelectorAll(".seg button").forEach((o) => o.setAttribute("aria-pressed", o === b));
+  horas = +b.dataset.h; loadTelemetria();
+});
+$("#tablebtn").onclick = () => {
+  const w = $("#tablewrap"); w.hidden = !w.hidden;
+  $("#tablebtn").setAttribute("aria-expanded", !w.hidden); $("#tablebtn").textContent = w.hidden ? "Ver tabla" : "Ocultar tabla";
+  if (!w.hidden) drawTable();
+};
+window.addEventListener("resize", () => samples.length && drawChart());
+
+/* ---------- Estadísticas de vida (jdoc ROBOT_LIFETIME_STATS) ---------- */
+const STAT = {
+  "Alive.seconds": ["Tiempo encendido", (v) => fmtDur(v)],
+  "Odom.Body": ["Distancia recorrida (estimada)", (v) => "≈ " + (v / 1e6).toFixed(1) + " m"], // unidad no documentada; µm da cifras plausibles
+  "Odom.LWheel":["Distancia rueda izq.", (v) => (v / 1000).toFixed(1) + " m"],
+  "Odom.Rwheel": ["Distancia rueda der.", (v) => (v / 1000).toFixed(1) + " m"],
+  "Pet.ms": ["Tiempo de caricias", (v) => fmtDur(v / 1000)],
+  "BStat.ReactedToTriggerWord": ["Respuestas a «Hey Vector»", (v) => v],
+  "BStat.AnimationPlayed": ["Animaciones reproducidas", (v) => v],
+  "Stim.CumlPosDelta": ["Estímulo acumulado", (v) => Math.round(v)],
+};
+function fmtDur(s) { s = Math.round(s); const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : `${m} min`; }
+$("#statsbtn").onclick = async () => {
+  const b = $("#statsbtn"); b.disabled = true; b.textContent = "Cargando…";
+  try {
+    const st = await sdk("get_robot_stats");
+    const keys = Object.keys(st).sort();
+    $("#lifetiles").innerHTML = Object.entries(STAT).filter(([k]) => k in st).slice(0, 4).map(([k, [lbl, f]]) =>
+      `<div class="card tile"><div class="k">${lbl}</div><div class="v">${esc(f(st[k]))}</div></div>`).join("");
+    $("#lifetable").innerHTML = `<tr><th>Métrica</th><th class="n">Valor</th></tr>` + keys.map((k) =>
+      `<tr><td>${esc(STAT[k]?.[0] ?? k.replace("FeatureType.", "Uso: ").replace("BStat.", ""))} <span style="color:var(--muted);font-size:12px">${STAT[k] ? esc(k) : ""}</span></td><td class="n">${esc(STAT[k] ? STAT[k][1](st[k]) : st[k])}</td></tr>`).join("");
+  } catch (e) { $("#lifetable").innerHTML = `<tr><td class="empty">No se pudo leer: ${esc(e.message)}</td></tr>`; }
+  b.disabled = false; b.textContent = "Recargar";
+};
+
+/* ---------- Caras y fotos ---------- */
+$("#facesbtn").onclick = async () => {
+  try {
+    const f = await sdk("get_faces");
+    $("#faces").innerHTML = f && f.length ? f.map((x) => `<div>👤 ${esc(x.name)} <span style="color:var(--muted)">#${x.face_id}</span></div>`).join("")
+      : "Aún no conoce a nadie. Di: «Hey Vector, me llamo …».";
+  } catch (e) { $("#faces").textContent = "No se pudo leer: " + e.message; }
+};
+$("#photosbtn").onclick = async () => {
+  try {
+    const ids = await sdk("get_image_ids");
+    $("#photos").innerHTML = ids && ids.length ? ids.slice(-24).reverse().map((id) => {
+      const q = new URLSearchParams({serial: SERIAL, id});
+      return `<a href="/api-sdk/get_image?${q}" target="_blank" rel="noopener"><img loading="lazy" alt="Foto ${id}" src="/api-sdk/get_image_thumb?${q}"></a>`;
+    }).join("") : `<span class="empty">No hay fotos. Dile «Hey Vector, hazme una foto».</span>`;
+  } catch (e) { $("#photos").innerHTML = `<span class="empty">No se pudo leer: ${esc(e.message)}</span>`; }
+};
+
+/* ---------- Control ---------- */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function withControl(fn) {
+  await sdk("assume_behavior_control", {priority: "high"});
+  await sleep(400);
+  try { await fn(); } finally { await sleep(300); await sdk("release_behavior_control"); }
+}
+const pulse = (ep, speed) => withControl(async () => { await sdk(ep, {speed}); await sleep(700); await sdk(ep, {speed: 0}); });
+/* ---------- Hablar: frases rápidas + historial (localStorage, solo comodidad de este navegador) ---------- */
+const QUICK = ["Hola, soy Vector", "Buenos días", "Buenas noches", "¿Qué tal estás?", "Me voy a cargar las pilas", "¡Bienvenido a casa!"];
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem("vh-say") || "[]"); } catch { return []; } },
+  add(t) { try { const h = [t, ...this.get().filter((x) => x !== t)].slice(0, 8); localStorage.setItem("vh-say", JSON.stringify(h)); } catch {} },
+};
+function renderSay() {
+  const chip = (t) => `<button class="btn" data-say="${esc(t)}" style="font-weight:400">${esc(t)}</button>`;
+  $("#quick").innerHTML = QUICK.map(chip).join("");
+  const h = store.get();
+  $("#sayhist").innerHTML = h.length ? "Recientes: " + h.map((t) => `<a href="#" data-say="${esc(t)}" style="color:var(--text2)">${esc(t)}</a>`).join(" · ") : "";
+}
+async function say(t) {
+  if (!SERIAL) { $("#saymsg").textContent = "Sin robot registrado todavía."; return; }
+  $("#saymsg").textContent = `Diciendo: «${t}»…`;
+  try { await withControl(async () => { await sdk("say_text", {text: t}); await sleep(Math.min(8000, 1500 + t.length * 70)); }); $("#saymsg").textContent = `Dicho ✓ «${t}»`; store.add(t); renderSay(); }
+  catch (e) { $("#saymsg").textContent = "Error: " + e.message; }
+}
+document.addEventListener("click", (e) => { const el = e.target.closest("[data-say]"); if (el) { e.preventDefault(); say(el.dataset.say); } });
+renderSay();
+
+$("#saybtn").onclick = async () => {
+  const t = $("#saytext").value.trim();
+  if (!t) { $("#saymsg").textContent = "Escribe una frase."; return; }
+  $("#saybtn").disabled = true; await say(t); $("#saybtn").disabled = false; $("#saytext").value = ""; $("#saytext").focus();
+};
+
+const ACTS = {
+  headup: () => pulse("move_head", 2), headdown: () => pulse("move_head", -2),
+  liftup: () => pulse("move_lift", 2), liftdown: () => pulse("move_lift", -2),
+  wake: () => sdk("trigger_wake_word"),
+};
+document.querySelectorAll("[data-act]").forEach((b) => b.onclick = async () => {
+  if (!SERIAL) return $("#ctrlmsg").textContent = "Sin robot registrado todavía.";
+  b.disabled = true; $("#ctrlmsg").textContent = "Enviando…";
+  try { await ACTS[b.dataset.act](); $("#ctrlmsg").textContent = "Hecho ✓"; }
+  catch (e) { $("#ctrlmsg").textContent = "Error: " + e.message; }
+  b.disabled = false;
+});
+$("#saytext").addEventListener("keydown", (e) => e.key === "Enter" && !$("#saybtn").disabled && $("#saybtn").click());
+$("#vol").onchange = async (e) => {
+  try { await sdk("volume", {volume: e.target.value}); $("#ctrlmsg").textContent = "Volumen cambiado ✓"; }
+  catch (err) { $("#ctrlmsg").textContent = "Error: " + err.message; }
+};
+
+/* ---------- Arranque ---------- */
+(async () => {
+  try { const info = await api("/api-sdk/get_sdk_info"); SERIAL = info.robots[0].esn; } catch { /* wire-pod apagado */ }
+  await loadProyecto().catch((e) => console.error(e));
+  await loadTelemetria();
+  setInterval(loadTelemetria, 60000);
+})();
+</script>
+</body>
+</html>

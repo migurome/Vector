@@ -1,0 +1,28 @@
+# Repos de referencia (owner/nombre). Se clonan en third_party/<owner>__<nombre>
+# Comentar con '#' los que no se quieran. Los repos de firmware (wire-os-victor ~2,6 GB,
+# wire-os, victor) son muy grandes y van comentados: descomentar solo para trabajar en firmware.
+
+# Servidor / voz
+kercre123/wire-pod
+digital-dream-labs/chipper
+digital-dream-labs/vector-cloud
+digital-dream-labs/hugh
+digital-dream-labs/escape-pod-extension
+
+# SDKs
+kercre123/wirepod-vector-python-sdk
+anki/vector-python-sdk
+fforchino/vector-go-sdk
+digital-dream-labs/vector-go-sdk
+randym32/Anki.Vector.SDK
+
+# Firmware
+kercre123/unlocking-vector
+digital-dream-labs/vector-web-setup
+# os-vector/wire-os-victor
+# os-vector/wire-os
+# kercre123/victor
+
+# Documentación
+os-vector/vector-docs
+randym32/Anki.Vector.Documentation

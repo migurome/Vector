@@ -1,0 +1,62 @@
+{
+  "robot": {
+    "nombre": "Vector G4C7",
+    "serie": "<nº de serie>",
+    "firmware": "2.0.1.6086ep",
+    "firmware_origen": "Fábrica Anki (protocolo BLE RTS v2, pantalla anki.com/v)",
+    "hardware": "Vector 1.0 (Anki) — probable por el firmware de fábrica",
+    "red": "MI-WIFI",
+    "ip": "<IP del robot>",
+    "estado_cuenta": "AuthorizedAsSecondary en wire-pod",
+    "servidor": "wire-pod v1.2.18 en el PC (<IP del PC>:8080)",
+    "voz": "Vosk · es-ES (vosk-model-small-es-0.42)"
+  },
+  "fases": [
+    {"id": "F0", "nombre": "Investigación y repositorio", "avance": 100,
+     "detalle": "Documentación en castellano (historia, hardware, arquitectura, wire-pod, SDKs, firmware), catálogo de 15 repos y script de clonado."},
+    {"id": "F1", "nombre": "Servidor local wire-pod", "avance": 95,
+     "detalle": "Instalado en Windows, modelo de voz en español instalado a mano, robot activado. Voz en castellano validada («¿Qué hora es?»). Falta: dejarlo arrancando con Windows."},
+    {"id": "F2", "nombre": "Emparejamiento y conectividad", "avance": 100,
+     "detalle": "Herramienta propia vector-ble-cli (BLE sin Chrome), Wi-Fi, OTA 2.0.1.6086ep y autenticación. Modo --wifi para cambiar de red."},
+    {"id": "F3", "nombre": "Web del proyecto y telemetría", "avance": 85,
+     "detalle": "Panel local con estado, batería, estadísticas de vida, caras, fotos, controles y registro de telemetría; validado con el robot en línea (habla desde la web). Arranque con iniciar_web.bat. Falta: cámara en directo."},
+    {"id": "F4", "nombre": "Configuración avanzada de wire-pod", "avance": 0,
+     "detalle": "Tiempo (clave de API meteorológica), preguntas abiertas con LLM, intents personalizados en español."},
+    {"id": "F5", "nombre": "SDK de Python", "avance": 10,
+     "detalle": "Ejemplo hola_vector.py escrito. Falta: instalar Python 3.12, configurar el SDK y primeros comportamientos propios."},
+    {"id": "F6", "nombre": "Servidor permanente y plugins", "avance": 0,
+     "detalle": "Mover wire-pod a una Raspberry Pi (siempre encendida) y desarrollar plugins Go para comandos de voz con lógica propia."},
+    {"id": "F7", "nombre": "Proyectos de aplicación", "avance": 0,
+     "detalle": "Visión con OpenCV, integración domótica (Home Assistant), asistente con IA, avisos y notificaciones."},
+    {"id": "F8", "nombre": "Firmware propio (WireOS)", "avance": 5,
+     "detalle": "Documentado el desbloqueo y la compilación. Requiere Linux y tiene riesgo de dejar el robot inservible."}
+  ],
+  "memoria": [
+    {"fecha": "2026-11-19", "titulo": "Investigación y repositorio inicial",
+     "texto": "Estado del ecosistema tras el cierre de Anki: wire-pod como servidor local, SDKs Python/Go/.NET, WireOS como firmware comunitario. Creado el repositorio con 7 documentos, catálogo de recursos y script de clonado (Windows necesita core.longpaths para wire-os-victor)."},
+    {"fecha": "2026-11-19", "titulo": "Instalación de wire-pod",
+     "texto": "Instalador v1.2.18 (sin firma digital; SmartScreen). La descarga del modelo de voz desde GitHub se quedó en 0 bytes con la conexión del móvil: se instaló a mano desde alphacephei.com en %APPDATA%\\wire-pod\\vosk\\models\\es-ES\\model."},
+    {"fecha": "2026-11-19", "titulo": "La batalla de la Wi-Fi",
+     "texto": "Vector solo usa 2,4 GHz. El punto de acceso del POCO M6 Pro iba a 5 GHz sin opción de cambiarlo; se probó compartir por USB + zona Wi-Fi de Windows y al final se usó la red de casa (Movistar Wi-Fi 6 emite ambas bandas con el mismo nombre)."},
+    {"fecha": "2026-11-19", "titulo": "Bluetooth: Chrome no conecta",
+     "texto": "wp.pvic.xyz se quedaba en la selección del robot sin error (el código traga el fallo de conexión GATT). Con Python/bleak sí conectaba (RSSI -32). Se creó tools/vector-ble-cli reutilizando el protocolo de DDL con el paquete webbluetooth para Node."},
+    {"fecha": "2026-11-19", "titulo": "Modo emparejamiento",
+     "texto": "Descubrimiento clave: la pantalla anki.com/v no implica modo emparejamiento. El robot lo anuncia con 'p' en el 4º byte de manufacturer data (f8057670); se activa con doble pulsación y dura ~1 min. Se corrigió además la lectura de búferes en Node (byteOffset) y el orden de suscripción."},
+    {"fecha": "2026-11-19", "titulo": "Firmware ep y activación",
+     "texto": "PIN → wifi-connect → ota-start 2.0.1.6086ep (100 %) → reinicio → anki-auth con el token de wire-pod: AuthorizedAsSecondary. wire-pod registra el robot (<nº de serie>, <IP del robot>, activated)."},
+    {"fecha": "2026-11-19", "titulo": "Web del proyecto",
+     "texto": "Panel local con telemetría, estadísticas, controles, fases y este diario. Protocolo de cambio de red con vector-ble-cli --wifi."},
+    {"fecha": "2026-11-19", "titulo": "Primera orden de voz en castellano",
+     "texto": "«Hey Vector… ¿qué hora es?» funciona: wake word → wire-pod → Vosk es-ES → intent → respuesta del robot. Cadena de voz completa validada."}
+  ],
+  "protocolo_wifi": [
+    "Conecta el PC a la red nueva y comprueba en Windows que es «Red privada» (Configuración → Red → propiedades). Si es pública, el firewall puede bloquear a wire-pod.",
+    "La red nueva debe tener 2,4 GHz (sola o combinada con 5 GHz bajo el mismo nombre) y WPA2.",
+    "Abre WirePod desde el menú Inicio y comprueba http://localhost:8080.",
+    "Pon a Vector en la base y haz doble pulsación del botón (modo emparejamiento, ~1 min).",
+    "En PowerShell: cd <carpeta del proyecto>\\tools\\vector-ble-cli y ejecuta: node index.js --wifi \"NOMBRE_RED\" \"CONTRASEÑA\"",
+    "Escribe el PIN que muestra la cara del robot. La herramienta escanea, conecta, muestra la IP y termina.",
+    "Comprueba que sale «wifi state: online». En 1–2 minutos wire-pod anota la nueva IP solo (vars.go: RecordBot).",
+    "Verifica en esta web que el estado pasa a «En línea». Prueba: «Hey Vector, ¿qué hora es?»."
+  ]
+}
