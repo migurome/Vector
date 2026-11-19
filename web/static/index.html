@@ -86,6 +86,16 @@ input{flex:1;min-width:160px}
 .note{color:var(--muted);font-size:13px;margin-top:8px}
 .msg{font-size:13px;color:var(--text2);min-height:1.5em}
 :focus-visible{outline:2px solid var(--series);outline-offset:2px}
+.rc{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.rc[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:6px}
+.pad .btn,.rccol .btn{font-size:20px;padding:0;min-height:48px;touch-action:none;user-select:none}
+.rccol{display:flex;flex-direction:column;gap:6px;min-width:64px}
+.rccol .k{color:var(--text2);font-size:13px}
+.btn.on{background:var(--text);color:var(--page)}
+.camgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.camgrid{grid-template-columns:1fr}}
+.rccol #rcsnap{font-size:14px;min-height:40px;padding:0 10px}
 @media (max-width:600px){nav{display:none}.two{grid-template-columns:1fr}}
 </style>
 </head>
@@ -127,11 +137,44 @@ input{flex:1;min-width:160px}
       <button class="btn" id="cambtn" aria-pressed="false">Encender</button>
       <button class="btn" id="snapbtn" disabled>Guardar captura</button>
     </div>
-    <div id="camwrap" style="background:var(--grid);border-radius:8px;aspect-ratio:16/9;max-height:480px;display:grid;place-items:center;overflow:hidden">
+    <div class="camgrid"><div>
+    <div id="camwrap" style="background:var(--grid);border-radius:8px;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden">
       <span class="empty" id="camhint">Cámara apagada. Consume batería y red: apágala cuando no la uses.</span>
       <img id="cam" alt="Imagen en directo de la cámara de Vector" hidden style="width:100%;height:100%;object-fit:contain">
     </div>
     <div class="msg" id="cammsg" aria-live="polite"></div>
+    </div><div>
+
+    <div class="row" style="margin:0 0 12px">
+      <h2 style="margin:0">Control remoto</h2>
+      <span class="pill" id="rcstate"><span class="dot" style="background:var(--good)"></span><span>Modo libre</span></span>
+      <span class="spacer"></span>
+      <button class="btn" id="rcbtn" aria-pressed="false">Tomar control</button>
+    </div>
+    <div class="rc" id="rc" aria-disabled="true">
+      <div class="pad" role="group" aria-label="Ruedas">
+        <span></span><button class="btn" data-drive="fwd" aria-label="Adelante">▲</button><span></span>
+        <button class="btn" data-drive="left" aria-label="Girar a la izquierda">◀</button><button class="btn" data-drive="stop" aria-label="Parar">■</button><button class="btn" data-drive="right" aria-label="Girar a la derecha">▶</button>
+        <span></span><button class="btn" data-drive="back" aria-label="Atrás">▼</button><span></span>
+      </div>
+      <div class="rccol" role="group" aria-label="Cabeza">
+        <span class="k">Cabeza</span>
+        <button class="btn" data-motor="head" data-dir="1" aria-label="Subir cabeza">▲</button>
+        <button class="btn" data-motor="head" data-dir="-1" aria-label="Bajar cabeza">▼</button>
+      </div>
+      <div class="rccol" role="group" aria-label="Brazo">
+        <span class="k">Brazo</span>
+        <button class="btn" data-motor="lift" data-dir="1" aria-label="Subir brazo">▲</button>
+        <button class="btn" data-motor="lift" data-dir="-1" aria-label="Bajar brazo">▼</button>
+      </div>
+      <div class="rccol" style="min-width:170px">
+        <label class="k" for="speed">Velocidad: <b id="speedv">100</b> mm/s</label>
+        <input type="range" id="speed" min="40" max="200" step="20" value="100" style="min-width:0">
+        <button class="btn" id="rcsnap">📷 Captura</button>
+      </div>
+    </div>
+    <div class="note">Mantén pulsado para moverlo; al soltar se para. Teclado: flechas o WASD (ruedas), R/F (cabeza), T/G (brazo), espacio (parar). Al terminar pulsa «Modo libre».</div>
+    </div></div>
   </section>
 
   <section class="grid two">
@@ -390,7 +433,9 @@ $("#photosbtn").onclick = async () => {
 
 /* ---------- Control ---------- */
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let manual = false; // control remoto activo: no tomar/soltar el control en cada acción
 async function withControl(fn) {
+  if (manual) return fn();
   await sdk("assume_behavior_control", {priority: "high"});
   await sleep(400);
   try { await fn(); } finally { await sleep(300); await sdk("release_behavior_control"); }
@@ -467,7 +512,81 @@ $("#snapbtn").onclick = () => {
   a.download = "vector-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".jpg";
   a.href = c.toDataURL("image/jpeg", 0.92); a.click();
 };
-window.addEventListener("beforeunload", () => { if (!$("#cam").hidden) camOff(); });
+/* ---------- Control remoto ---------- */
+const sdkKeep = (ep, params = {}) => fetch(`/api-sdk/${ep}?` + new URLSearchParams({serial: SERIAL, ...params}), {keepalive: true}).catch(() => {});
+function setManual(on) {
+  manual = on;
+  $("#rc").setAttribute("aria-disabled", String(!on));
+  $("#rcbtn").textContent = on ? "Modo libre" : "Tomar control";
+  $("#rcbtn").setAttribute("aria-pressed", String(on));
+  $("#rcstate").innerHTML = on
+    ? `<span class="dot" style="background:var(--warn)"></span><span aria-hidden="true">!</span><span>Control manual</span>`
+    : `<span class="dot" style="background:var(--good)"></span><span>Modo libre</span>`;
+}
+$("#rcbtn").onclick = async () => {
+  if (!SERIAL) return $("#cammsg").textContent = "Sin robot registrado todavía.";
+  const b = $("#rcbtn"); b.disabled = true;
+  try {
+    if (!manual) {
+      await sdk("assume_behavior_control", {priority: "high"});
+      setManual(true);
+      if ($("#cam").hidden) $("#cambtn").click(); // conducir sin ver no tiene sentido
+      $("#cammsg").textContent = "Control tomado: Vector deja de moverse por su cuenta.";
+    } else {
+      stopAll(); await sleep(200);
+      await sdk("release_behavior_control");
+      setManual(false);
+      $("#cammsg").textContent = "Modo libre: Vector vuelve a moverse por su cuenta.";
+    }
+  } catch (e) { $("#cammsg").textContent = "Error: " + e.message; }
+  b.disabled = false;
+};
+const speed = () => +$("#speed").value;
+$("#speed").oninput = () => $("#speedv").textContent = speed();
+const DRIVE = {
+  fwd: () => [speed(), speed()], back: () => [-speed(), -speed()],
+  left: () => [-speed() * .6, speed() * .6], right: () => [speed() * .6, -speed() * .6], stop: () => [0, 0],
+};
+const drive = (d) => { const [lw, rw] = DRIVE[d](); return sdkKeep("move_wheels", {lw: Math.round(lw), rw: Math.round(rw)}); };
+const motor = (m, dir) => sdkKeep(m === "head" ? "move_head" : "move_lift", {speed: dir * 2});
+let active = null; // qué se está moviendo ahora: {stop()}
+function start(kind, a, b) {
+  if (!manual) return;
+  if (active) active.stop();
+  if (kind === "drive") { drive(a); active = {stop: () => drive("stop")}; }
+  else { motor(a, b); active = {stop: () => motor(a, 0)}; }
+}
+function stopAll() { if (active) { active.stop(); active = null; } }
+document.querySelectorAll("[data-drive],[data-motor]").forEach((el) => {
+  el.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); el.setPointerCapture(e.pointerId); el.classList.add("on");
+    if (el.dataset.drive === "stop") return stopAll();
+    el.dataset.drive ? start("drive", el.dataset.drive) : start("motor", el.dataset.motor, +el.dataset.dir);
+  });
+  const up = () => { el.classList.remove("on"); stopAll(); };
+  el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+});
+const KEYS = {ArrowUp: ["drive", "fwd"], w: ["drive", "fwd"], ArrowDown: ["drive", "back"], s: ["drive", "back"],
+  ArrowLeft: ["drive", "left"], a: ["drive", "left"], ArrowRight: ["drive", "right"], d: ["drive", "right"],
+  r: ["motor", "head", 1], f: ["motor", "head", -1], t: ["motor", "lift", 1], g: ["motor", "lift", -1]};
+let held = null;
+document.addEventListener("keydown", (e) => {
+  if (!manual || e.repeat || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (e.key === " ") { e.preventDefault(); held = null; return stopAll(); }
+  const k = KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+  if (!k) return;
+  e.preventDefault(); held = e.key.toLowerCase(); start(...k);
+});
+document.addEventListener("keyup", (e) => { if (held && e.key.toLowerCase() === held) { held = null; stopAll(); } });
+// seguridad: si la pestaña pierde el foco, parar motores
+window.addEventListener("blur", stopAll);
+document.addEventListener("visibilitychange", () => document.hidden && stopAll());
+$("#rcsnap").onclick = () => $("#snapbtn").disabled ? ($("#cammsg").textContent = "Enciende la cámara primero.") : $("#snapbtn").click();
+
+window.addEventListener("beforeunload", () => {
+  if (!$("#cam").hidden) camOff();
+  if (manual) { stopAll(); sdkKeep("release_behavior_control"); } // no dejarlo bloqueado al cerrar la web
+});
 
 /* ---------- Arranque ---------- */
 (async () => {
