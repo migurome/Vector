@@ -65,7 +65,9 @@
     {"fecha": "2026-11-19", "titulo": "Rediseño con la estética de Vector",
      "texto": "Negro profundo, grafito y ojos verdes que brillan; tipografía geométrica fina (Quicksand) y toques dorados. La portada es su cara: los ojos parpadean, miran al puntero y curiosean, sonríen al conectar o al hacer clic, se balancean mientras habla, se concentran con la cámara y duermen (zzz) si está desconectado. Dos pestañas: Robot (interactivo) y Proyecto (telemetría, registro de voz, estadísticas, fases, guías, preguntas, memoria, Wi-Fi y ficha)."},
     {"fecha": "2026-11-19", "titulo": "Apagones por batería y porcentaje fiable",
-     "texto": "Se apagó tres veces (12:15, 12:51, 13:02). La telemetría lo explica: en la base marcaba 3,56 V (≈6 %) sin estar cargando, y fuera de la base el firmware da 0 V y un «nivel 3 = llena» falso. Ahora el % se calcula solo por voltaje (curva Li-ion, −0,1 V si está cargando), con barra, aviso de batería baja (<20 %) y gráfico en %. Si vuelve a quedarse en la base sin «cargando», revisar contactos y posición."}
+     "texto": "Se apagó tres veces (12:15, 12:51, 13:02). La telemetría lo explica: en la base marcaba 3,56 V (≈6 %) sin estar cargando, y fuera de la base el firmware da 0 V y un «nivel 3 = llena» falso. Ahora el % se calcula solo por voltaje (curva Li-ion, −0,1 V si está cargando), con barra, aviso de batería baja (<20 %) y gráfico en %. Si vuelve a quedarse en la base sin «cargando», revisar contactos y posición."},
+    {"fecha": "2026-11-19", "titulo": "Color de ojos sincronizado",
+     "texto": "Pulsar la cara de la web cambia el color de ojos del robot (los 7 presets de Anki vía /api-sdk/eye_color) y la web a la vez; también se puede elegir con las muestras de color. Al abrir, la web lee el color del robot (get_sdk_settings, incluido el personalizado) y toda la interfaz adopta ese color. El cambio se guarda en el robot."}
   ],
   "protocolo_wifi": [
     "Conecta el PC a la red nueva y comprueba en Windows que es «Red privada» (Configuración → Red → propiedades). Si es pública, el firewall puede bloquear a wire-pod.",

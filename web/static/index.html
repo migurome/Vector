@@ -126,6 +126,10 @@ details summary{font-family:var(--font-display)}
 .zzz{position:absolute;right:12%;top:12%;font-family:var(--font-display);font-weight:700;color:var(--eye);opacity:0;pointer-events:none}
 .face.sleep .zzz{animation:zz 2.6s ease-in-out infinite}
 @keyframes zz{0%{opacity:0;transform:translate(0,10px) scale(.7)}40%{opacity:.8}100%{opacity:0;transform:translate(10px,-18px) scale(1.1)}}
+.face{cursor:pointer;transition:box-shadow .3s}
+.face:hover{box-shadow:0 0 0 6px #0b0c0e,0 0 0 7px var(--eye),0 25px 60px rgba(0,0,0,.6),0 0 40px var(--eye-glow)}
+.sw{width:22px;height:22px;border-radius:7px;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 10px rgba(0,0,0,.4)}
+.sw[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 14px currentColor}
 .hello{font-family:var(--font-display)}
 .hello h1{font-weight:300;font-size:clamp(34px,5vw,54px);line-height:1.05;margin:0 0 8px;letter-spacing:.005em}
 .hello h1 em{font-style:normal;color:var(--eye);text-shadow:0 0 22px var(--eye-glow)}
@@ -155,8 +159,12 @@ details summary{font-family:var(--font-display)}
 <main class="wrap">
 <div id="tab-robot" role="tabpanel" aria-labelledby="tabbtn-robot">
   <section id="estado" class="hero">
-    <div class="face sleep" id="face" aria-hidden="true">
-      <div class="screen"><div class="eyes"><div class="eye"></div><div class="eye"></div></div><span class="zzz">z</span></div>
+    <div>
+      <div class="face sleep" id="face" role="button" tabindex="0" aria-label="Cambiar el color de los ojos de Vector" title="Pulsa para cambiar el color de sus ojos">
+        <div class="screen"><div class="eyes"><div class="eye"></div><div class="eye"></div></div><span class="zzz">z</span></div>
+      </div>
+      <div class="row" style="justify-content:center;margin-top:16px;gap:10px" id="swatches" role="group" aria-label="Color de ojos"></div>
+      <div class="note" id="eyelabel" style="text-align:center" aria-live="polite">Pulsa los ojos para cambiarles el color</div>
     </div>
     <div class="hello">
       <h1 id="hellotitle">Hola, soy <em>Vector</em></h1>
@@ -403,7 +411,57 @@ if (!quiet) {
     const dx = (e.clientX - (r.left + r.width / 2)) / innerWidth, dy = (e.clientY - (r.top + r.height / 2)) / innerHeight;
     look(Math.max(-1, Math.min(1, dx * 2)) * 9, Math.max(-1, Math.min(1, dy * 2)) * 7);
   });
-  face.parentElement.addEventListener("click", () => mood === "ok" && emote("happy", 1500));
+}
+
+/* ---------- Color de ojos: el mismo en el robot y en la web ---------- */
+// Presets de Anki (settings.proto EyeColor 0-6); el hex es una aproximación para la web
+const EYES = [
+  ["Turquesa", "#17e6d0"], ["Naranja", "#ff8a1e"], ["Amarillo", "#ffd84a"], ["Lima", "#b6ff3b"],
+  ["Zafiro", "#4d8bff"], ["Morado", "#b06bff"], ["Verde", "#2ff59a"],
+];
+let eyeIdx = 0;
+function hexToRgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${a})`; }
+function hslToHex(h, s, l) {  // para el color personalizado (hue/saturation 0-1 del robot)
+  const f = (n) => { const k = (n + h * 12) % 12, a = s * Math.min(l, 1 - l);
+    return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, "0"); };
+  return "#" + f(0) + f(8) + f(4);
+}
+function paintEyes(hex, name) {
+  const r = document.documentElement.style;
+  r.setProperty("--eye", hex); r.setProperty("--series", hex);
+  r.setProperty("--eye-glow", hexToRgba(hex, .55)); r.setProperty("--good", hex);
+  document.querySelectorAll(".sw").forEach((b, i) => b.setAttribute("aria-pressed", String(i === eyeIdx && name === EYES[i][0])));
+  $("#eyelabel").textContent = `Ojos: ${name} · pulsa la cara para cambiar`;
+}
+async function setEyes(i) {
+  eyeIdx = (i + EYES.length) % EYES.length;
+  const [name, hex] = EYES[eyeIdx];
+  paintEyes(hex, name);
+  emote("happy", 1200);
+  if (!SERIAL) return;
+  try { await sdk("eye_color", {color: eyeIdx}); }
+  catch (e) { $("#eyelabel").textContent = `Ojos: ${name} solo en la web (el robot no responde)`; }
+}
+$("#swatches").innerHTML = EYES.map(([n, hex], i) =>
+  `<button class="sw" style="background:${hex};color:${hex}" data-eye="${i}" aria-label="Ojos ${n}" title="${n}"></button>`).join("");
+document.querySelectorAll(".sw").forEach((b) => b.onclick = () => setEyes(+b.dataset.eye));
+face.addEventListener("click", () => setEyes(eyeIdx + 1));
+face.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setEyes(eyeIdx + 1); } });
+function findKey(o, k) {
+  if (o && typeof o === "object") for (const [kk, v] of Object.entries(o)) {
+    if (kk === k) return v;
+    const r = findKey(v, k); if (r !== undefined) return r;
+  }
+}
+async function loadEyes() {  // al abrir, la web adopta el color que tenga el robot
+  if (!SERIAL) return paintEyes(EYES[0][1], EYES[0][0]);
+  try {
+    const st = await sdk("get_sdk_settings");
+    const custom = findKey(st, "custom_eye_color");
+    if (custom && custom.enabled) { eyeIdx = -1; return paintEyes(hslToHex(custom.hue, custom.saturation, .58), "personalizado"); }
+    eyeIdx = +(findKey(st, "eye_color") || 0);
+    paintEyes(EYES[eyeIdx][1], EYES[eyeIdx][0]);
+  } catch { paintEyes(EYES[0][1], EYES[0][0]); }
 }
 
 /* ---------- Pestañas ---------- */
@@ -851,6 +909,7 @@ document.querySelectorAll("[data-vf]").forEach((b) => b.onclick = () => {
 (async () => {
   tabFromHash();
   try { const info = await api("/api-sdk/get_sdk_info"); SERIAL = info.robots[0].esn; } catch { /* wire-pod apagado */ }
+  loadEyes();
   await loadProyecto().catch((e) => console.error(e));
   await loadTelemetria();
   setInterval(loadTelemetria, 60000);
