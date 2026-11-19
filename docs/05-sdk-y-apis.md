@@ -35,6 +35,8 @@ certificado, y reutiliza las funciones del asistente oficial para autenticar y e
 |---|---|
 | `examples/python/hola_vector.py` | Batería, habla, mueve cabeza y brazo, guarda una foto |
 | `examples/python/pantalla.py` | Muestra una imagen o GIF animado en su cara (adapta a 184×96 sin deformar) |
+| `examples/python/cubo.py` | Luces del cubo: demo arcoíris, un color (`rojo`, `#ff00aa`…) u `off` |
+| `examples/python/reacciones.py` | Saluda por su nombre a quien reconoce, comenta tu sonrisa y agradece caricias |
 
 Log detallado: `$env:VECTOR_LOG_LEVEL = "DEBUG"`. Documentación del fork: <https://keriganc.com/sdkdocs>
 

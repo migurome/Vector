@@ -233,6 +233,44 @@ class Handler(SimpleHTTPRequestHandler):
             except (ConnectionError, TimeoutError, OSError):
                 pass  # el navegador ha cerrado o el robot ha dejado de enviar
 
+    def do_POST(self):
+        from urllib.parse import parse_qs, urlparse
+        url = urlparse(self.path)
+        if url.path != "/pantalla":
+            return self.enviar(404, b'{"error":"no encontrado"}')
+        q = parse_qs(url.query)
+        ext = q.get("ext", ["png"])[0].lower()
+        if ext not in ("png", "jpg", "jpeg", "gif", "webp", "bmp"):
+            return self.enviar(400, json.dumps({"error": "formato no admitido"}).encode())
+        try:
+            valor = float(q.get("valor", ["5"])[0])  # segundos (imagen) o vueltas (GIF)
+        except ValueError:
+            return self.enviar(400, json.dumps({"error": "valor no numérico"}).encode())
+        valor = max(1, min(valor, 60 if ext != "gif" else 10))
+        n = int(self.headers.get("Content-Length", 0))
+        if not 0 < n <= 8 * 1024 * 1024:
+            return self.enviar(400, json.dumps({"error": "imagen vacía o mayor de 8 MB"}).encode())
+        datos = self.rfile.read(n)
+        py = BASE.parent / ".venv" / "Scripts" / "python.exe"
+        script = BASE.parent / "examples" / "python" / "pantalla.py"
+        if not py.exists():
+            return self.enviar(501, json.dumps({"error": "falta el entorno .venv con el SDK (ver guía del SDK)"}).encode())
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:  # carpeta propia: el fichero subido no se ejecuta, solo se abre como imagen
+            f = Path(tmp) / f"imagen.{ext}"
+            f.write_bytes(datos)
+            try:
+                r = subprocess.run([str(py), "-I", str(script), str(f), f"{valor:g}"], capture_output=True,
+                                   text=True, encoding="utf-8", errors="replace", timeout=150,
+                                   env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+            except subprocess.TimeoutExpired:
+                return self.enviar(504, json.dumps({"error": "el robot tardó demasiado"}).encode())
+        if r.returncode != 0:
+            ult = [ln for ln in r.stderr.splitlines() if ln.strip()][-1:] or ["error desconocido"]
+            return self.enviar(502, json.dumps({"error": ult[0][:300]}, ensure_ascii=False).encode())
+        return self.enviar(200, b'{"ok":true}')
+
     def do_GET(self):
         if self.path.startswith("/cam-stream"):
             return self.stream_camara()

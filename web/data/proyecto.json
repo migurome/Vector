@@ -45,8 +45,8 @@
     {
       "id": "F5",
       "nombre": "SDK de Python",
-      "avance": 70,
-      "detalle": "Python 3.12 + .venv con wirepod_vector_sdk 0.8.1. scripts/configurar_sdk.py (certificado leído del robot, sin DDL). hola_vector.py validado (habla, mueve, foto) y pantalla.py (imágenes/GIF en su cara). Falta: comportamientos reactivos con eventos (caras, caricias) y llevar la pantalla a la web."
+      "avance": 90,
+      "detalle": "Python 3.12 + .venv con wirepod_vector_sdk 0.8.1; scripts/configurar_sdk.py (certificado leído del robot). Ejemplos: hola_vector.py, pantalla.py (imágenes/GIF), cubo.py (luces del cubo) y reacciones.py (saluda por su nombre, comenta tu sonrisa, agradece caricias). La web muestra imágenes, GIF o texto en su cara. Falta: probar reacciones.py contigo delante para cerrar la fase."
     },
     {
       "id": "F6",
@@ -172,6 +172,11 @@
       "fecha": "2026-11-19",
       "titulo": "Corrección: el 6 % era un voltaje congelado",
       "texto": "Con la carga completa, en la base y sin cargar, el robot envía un voltaje fijo (3,557422 V idéntico durante 25 min) y nivel 3: la web lo convertía en un 6 %. Ahora ese estado cuenta como 100 % («carga completa»). Corrige también la entrada anterior: el apagado de las 12:15 tenía ese mismo patrón, así que probablemente no fue por batería; los de 12:51 y 13:02 sí (a las 13:06 cargaba desde 3,74 V). La descarga completa como «mantenimiento» se descarta: en litio acelera el desgaste."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Fase 5: reacciones y pantalla en la web",
+      "texto": "reacciones.py escucha los eventos de caras (nombre y expresión) y el sensor de caricias; toma el control solo un instante para hablar y usa esperas para no repetirse. La web tiene «Su pantalla»: subir imagen/GIF o escribir un texto (en el color de los ojos), con vista previa a 184×96; server.py recibe la imagen y lanza pantalla.py con el Python del proyecto. Probado: «Hola!» en su cara en ~7 s."
     }
   ],
   "protocolo_wifi": [
@@ -206,16 +211,17 @@
         ".venv\\Scripts\\python.exe examples\\python\\pantalla.py — muestra «¡Hola!» en su cara",
         ".venv\\Scripts\\python.exe examples\\python\\pantalla.py foto.jpg 8 — una imagen durante 8 segundos",
         ".venv\\Scripts\\python.exe examples\\python\\pantalla.py animacion.gif 3 — un GIF animado, 3 vueltas",
-        ".venv\\Scripts\\python.exe examples\\python\\cubo.py — luces del cubo: demo arcoíris, un color (rojo, azul, #ff00aa…) u off"
+        ".venv\\Scripts\\python.exe examples\\python\\cubo.py — luces del cubo: demo arcoíris, un color (rojo, azul, #ff00aa…) u off",
+        ".venv\\Scripts\\python.exe examples\\python\reacciones.py 15 — 15 minutos de reacciones: saluda a quien reconoce, comenta si sonríes y agradece caricias"
       ],
       "nota": "pantalla.py adapta cualquier imagen a 184×96 sin deformarla (bandas negras si la proporción no coincide)."
     },
     {
       "titulo": "Pendiente para cerrar la Fase 5",
-      "intro": "El 30 % que falta:",
+      "intro": "El 10 % que falta:",
       "pasos": [
-        "Comportamientos que reaccionan a eventos: saludar por su nombre a quien reconoce, reaccionar a las caricias…",
-        "Llevar la pantalla a esta web: subir una imagen o GIF y que aparezca en su cara."
+        "Probar reacciones.py con alguien delante (cara reconocida) y acariciándolo.",
+        "Si convence, ofrecerlo como interruptor en la web (activar/desactivar reacciones)."
       ],
       "nota": ""
     }

@@ -29,6 +29,8 @@ Panel local con:
 - **Estado y telemetría**: en línea / sin conexión, batería (voltaje o nivel), carga, disponibilidad,
   gráfico histórico con vista en tabla.
 - **Hablar**: Vector dice lo que escribas, con frases rápidas e historial.
+- **Su pantalla**: imágenes, GIF o texto en su cara (usa el SDK de `.venv`).
+- **Comandos**: sus órdenes básicas sin decirlas, «Dormir» e «Ir a la base»; color de ojos al pulsar su cara.
 - **Cámara en directo** (MJPEG ~4 fps, 640×360) con **control remoto**: tomar control / modo libre,
   ruedas, cabeza y brazo (ratón, táctil o teclado), velocidad y capturas.
 - Estadísticas de vida, caras conocidas, fotos del robot y volumen.

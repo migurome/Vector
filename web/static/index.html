@@ -130,6 +130,10 @@ details summary{font-family:var(--font-display)}
 .face:hover{box-shadow:0 0 0 6px #0b0c0e,0 0 0 7px var(--eye),0 25px 60px rgba(0,0,0,.6),0 0 40px var(--eye-glow)}
 .sw{width:22px;height:22px;border-radius:7px;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 10px rgba(0,0,0,.4)}
 .sw[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 14px currentColor}
+.screengrid{display:grid;grid-template-columns:minmax(0,368px) 1fr;gap:20px;align-items:center}
+.minis{aspect-ratio:184/96;background:#000;border:6px solid #16181b;outline:1px solid var(--line);border-radius:14px;display:grid;place-items:center;overflow:hidden}
+.minis canvas,.minis img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+@media (max-width:700px){.screengrid{grid-template-columns:1fr}}
 .cmds{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
 .cmd{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px!important;border-radius:16px!important}
 .cmd b{font-family:var(--font-display);font-size:15px}
@@ -199,6 +203,35 @@ details summary{font-family:var(--font-display)}
     <div class="row" id="quick" aria-label="Frases rápidas"></div>
     <div class="msg" id="saymsg" aria-live="polite"></div>
     <div id="sayhist" class="note"></div>
+  </section>
+
+  <section id="pantalla" class="card">
+    <h2>Su pantalla <small>Muestra una imagen, un GIF o un texto en la cara de Vector</small></h2>
+    <div class="screengrid">
+      <div>
+        <div class="minis" aria-label="Vista previa a 184×96, como lo verá Vector">
+          <canvas id="scrcanvas" width="184" height="96" hidden></canvas>
+          <img id="scrimg" alt="Vista previa" hidden>
+          <span class="empty" id="scrhint">Vista previa</span>
+        </div>
+      </div>
+      <div>
+        <div class="row" style="margin-bottom:10px">
+          <label class="btn" for="scrfile" style="cursor:pointer">Elegir imagen o GIF</label>
+          <input type="file" id="scrfile" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" hidden>
+          <span class="note" id="scrname" style="margin:0"></span>
+        </div>
+        <div class="row" style="margin-bottom:10px">
+          <input id="scrtext" maxlength="24" placeholder="…o escribe un texto corto" aria-label="Texto para su pantalla">
+        </div>
+        <div class="row">
+          <label class="row" style="gap:6px;font-size:14px"><span id="scrvallabel">Segundos</span>
+            <input type="number" id="scrval" value="5" min="1" max="60" style="width:80px;flex:none"></label>
+          <button class="btn primary" id="scrsend" disabled>Mostrar en su cara</button>
+        </div>
+        <div class="msg" id="scrmsg" aria-live="polite"></div>
+      </div>
+    </div>
   </section>
 
   <section id="camara" class="card">
@@ -811,6 +844,49 @@ $("#sleepbtn").onclick = async () => {
   await runCmd("intent_system_sleep", "Dormir");
   setTimeout(() => face.classList.add("sleep"), 800);  // la web también se duerme…
   setTimeout(() => mood === "ok" && face.classList.remove("sleep"), 6000);  // …un momento
+};
+
+/* ---------- Su pantalla (server.py lanza examples/python/pantalla.py con el SDK) ---------- */
+let scrBlob = null, scrExt = "png";
+function scrShow(kind) {
+  $("#scrcanvas").hidden = kind !== "canvas"; $("#scrimg").hidden = kind !== "img"; $("#scrhint").hidden = !!kind;
+  $("#scrsend").disabled = !kind;
+}
+$("#scrfile").onchange = () => {
+  const f = $("#scrfile").files[0];
+  if (!f) return;
+  if (f.size > 8 * 1024 * 1024) { $("#scrmsg").textContent = "La imagen pasa de 8 MB."; return; }
+  scrBlob = f; scrExt = (f.name.split(".").pop() || "png").toLowerCase();
+  $("#scrtext").value = ""; $("#scrname").textContent = f.name;
+  const gif = scrExt === "gif";
+  $("#scrvallabel").textContent = gif ? "Vueltas" : "Segundos";
+  $("#scrval").max = gif ? 10 : 60; $("#scrval").value = gif ? 2 : 5;
+  $("#scrimg").src = URL.createObjectURL(f); scrShow("img");
+};
+$("#scrtext").oninput = () => {
+  const t = $("#scrtext").value.trim();
+  if (!t) { scrBlob = null; return scrShow(null); }
+  const c = $("#scrcanvas"), g = c.getContext("2d");
+  g.fillStyle = "#000"; g.fillRect(0, 0, 184, 96);
+  let size = 40;  // el mayor tamaño que quepa en 172 px de ancho
+  do { g.font = `600 ${size}px Quicksand, system-ui, sans-serif`; size -= 2; } while (g.measureText(t).width > 172 && size > 10);
+  g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--eye").trim() || "#2ff59a";
+  g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, 92, 50);
+  $("#scrvallabel").textContent = "Segundos"; $("#scrval").max = 60;
+  $("#scrname").textContent = ""; $("#scrfile").value = "";
+  c.toBlob((b) => { scrBlob = b; scrExt = "png"; }, "image/png");
+  scrShow("canvas");
+};
+$("#scrsend").onclick = async () => {
+  if (!scrBlob) return;
+  const b = $("#scrsend"); b.disabled = true;
+  $("#scrmsg").textContent = "Enviando a su cara… (tarda unos segundos en conectar)";
+  try {
+    const r = await fetch(`/pantalla?ext=${encodeURIComponent(scrExt)}&valor=${encodeURIComponent($("#scrval").value)}`, {method: "POST", body: scrBlob});
+    const j = await r.json().catch(() => ({}));
+    $("#scrmsg").textContent = r.ok ? "Mostrado en su cara ✓" : "Error: " + (j.error || r.status);
+  } catch (e) { $("#scrmsg").textContent = "Error: " + e.message; }
+  b.disabled = false;
 };
 
 /* ---------- Cámara (MJPEG de wire-pod reenviado por server.py) ---------- */
