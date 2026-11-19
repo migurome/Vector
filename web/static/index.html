@@ -103,6 +103,7 @@ input{flex:1;min-width:160px}
 <header><div class="wrap top">
   <div class="brand">Vector Hub<small id="botname">—</small></div>
   <span class="pill" id="status" role="status"><span class="dot"></span><span>Cargando…</span></span>
+  <button class="btn" id="reconbtn" hidden style="padding:4px 12px;font-size:13px">↻ Reconectar</button>
   <nav>
     <a href="#estado">Estado</a><a href="#hablar">Hablar</a><a href="#camara">Cámara</a><a href="#voz">Voz</a><a href="#telemetria">Telemetría</a><a href="#vida">Estadísticas</a>
     <a href="#control">Control</a><a href="#fases">Fases</a><a href="#guias">Guías</a><a href="#faq">Preguntas</a><a href="#memoria">Memoria</a><a href="#wifi">Cambio de Wi-Fi</a>
@@ -112,6 +113,10 @@ input{flex:1;min-width:160px}
 <main class="wrap">
   <section id="estado">
     <h2>Estado del robot <small id="updated"></small></h2>
+    <div class="card" id="reconpanel" hidden style="margin-bottom:12px">
+      <div class="row" style="margin-bottom:6px"><b>Reconexión</b><span class="spacer"></span><button class="btn" id="reconclose" style="padding:2px 10px" aria-label="Cerrar">✕</button></div>
+      <ol class="steps" id="reconsteps" style="margin:0"></ol>
+    </div>
     <div class="grid tiles">
       <div class="card tile"><div class="k">Batería</div><div class="v" id="t-bat">—</div><div class="s" id="t-bat-s">&nbsp;</div></div>
       <div class="card tile"><div class="k">Carga</div><div class="v" id="t-chg">—</div><div class="s" id="t-chg-s">&nbsp;</div></div>
@@ -121,7 +126,7 @@ input{flex:1;min-width:160px}
   </section>
 
   <section id="hablar" class="card">
-    <h2>Hablar <small>Vector dice lo que escribas (máx. 300 caracteres)</small></h2>
+    <h2>Hablar <small>Vector dice lo que escribas (máx. 300 caracteres; se quitan ¿ ¡ y tildes porque su voz los lee mal)</small></h2>
     <div class="row" style="margin-bottom:10px">
       <input id="saytext" placeholder="Escribe una frase y pulsa Enter" maxlength="300" aria-label="Texto para que lo diga Vector">
       <button class="btn" id="saybtn">Decir</button>
@@ -271,7 +276,21 @@ function setStatus(kind, text) {
   const colors = {ok:"var(--good)", off:"var(--crit)", wp:"var(--warn)"};
   const icons = {ok:"●", off:"✕", wp:"!"};
   $("#status").innerHTML = `<span class="dot" style="background:${colors[kind]}"></span><span aria-hidden="true">${icons[kind]}</span><span>${esc(text)}</span>`;
+  $("#reconbtn").hidden = kind === "ok";
 }
+
+$("#reconbtn").onclick = async () => {
+  const b = $("#reconbtn"); b.disabled = true; b.textContent = "Reconectando…";
+  $("#reconpanel").hidden = false; $("#reconsteps").innerHTML = "<li>Comprobando wire-pod, robot y conexión (hasta ~40 s)…</li>";
+  try {
+    const r = await api("/reconectar");
+    $("#reconsteps").innerHTML = r.pasos.map(([paso, ok, msg]) =>
+      `<li>${ok ? "✓" : "✕"} <b>${esc(paso)}</b>: ${esc(msg)}</li>`).join("");
+    if (r.ok) { setStatus("ok", "En línea"); await loadTelemetria(); }
+  } catch (e) { $("#reconsteps").innerHTML = `<li>✕ La web no responde: ${esc(e.message)}</li>`; }
+  b.disabled = false; b.textContent = "↻ Reconectar";
+};
+$("#reconclose").onclick = () => $("#reconpanel").hidden = true;
 
 /* ---------- Proyecto: ficha, fases, memoria, wifi ---------- */
 async function loadProyecto() {
@@ -476,7 +495,11 @@ async function withControl(fn) {
 }
 const pulse = (ep, speed) => withControl(async () => { await sdk(ep, {speed}); await sleep(700); await sdk(ep, {speed: 0}); });
 /* ---------- Hablar: frases rápidas + historial (localStorage, solo comodidad de este navegador) ---------- */
-const QUICK = ["Hola, soy Vector", "Buenos días", "Buenas noches", "¿Qué tal estás?", "Me voy a cargar las pilas", "¡Bienvenido a casa!"];
+const QUICK = ["Hola, soy Vector", "Buenos dias", "Buenas noches", "Que tal estas?", "Me voy a cargar las pilas", "Bienvenido a casa!"];
+// la voz de Vector (sintetizador inglés) lee mal ¿ ¡ y las tildes: se quitan antes de enviar; la ñ se respeta
+const SIN_TILDE = {á: "a", é: "e", í: "i", ó: "o", ú: "u", ü: "u", à: "a", è: "e", ì: "i", ò: "o", ù: "u",
+  Á: "A", É: "E", Í: "I", Ó: "O", Ú: "U", Ü: "U", À: "A", È: "E", Ì: "I", Ò: "O", Ù: "U"};
+const paraVoz = (t) => t.replace(/[¿¡]/g, "").replace(/[áéíóúüàèìòùÁÉÍÓÚÜÀÈÌÒÙ]/g, (c) => SIN_TILDE[c]).replace(/\s+/g, " ").trim();
 const store = {
   get() { try { return JSON.parse(localStorage.getItem("vh-say") || "[]"); } catch { return []; } },
   add(t) { try { const h = [t, ...this.get().filter((x) => x !== t)].slice(0, 8); localStorage.setItem("vh-say", JSON.stringify(h)); } catch {} },
@@ -489,6 +512,8 @@ function renderSay() {
 }
 async function say(t) {
   if (!SERIAL) { $("#saymsg").textContent = "Sin robot registrado todavía."; return; }
+  t = paraVoz(t);
+  if (!t) { $("#saymsg").textContent = "Escribe una frase."; return; }
   $("#saymsg").textContent = `Diciendo: «${t}»…`;
   try { await withControl(async () => { await sdk("say_text", {text: t}); await sleep(Math.min(8000, 1500 + t.length * 70)); }); $("#saymsg").textContent = `Dicho ✓ «${t}»`; store.add(t); renderSay(); }
   catch (e) { $("#saymsg").textContent = "Error: " + e.message; }

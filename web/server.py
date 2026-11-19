@@ -9,6 +9,7 @@ Variables opcionales: WIREPOD=http://localhost:8080  PORT=8090  INTERVALO=60
 import json
 import os
 import re
+import socket
 import threading
 import time
 import urllib.error
@@ -48,6 +49,21 @@ def wirepod_json(path, timeout=25):
         return None, text
 
 
+def robot_en_red(ip, timeout=3):
+    """¿Acepta el robot conexiones en su puerto 443?"""
+    try:
+        with socket.create_connection((ip, 443), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def renovar_conexion(esn):
+    """wire-pod guarda la conexión gRPC con el robot; tras un reinicio del robot queda inservible
+    (401 / timeouts) hasta que se descarta. /api-sdk/disconnect la descarta y la siguiente llamada la recrea."""
+    wirepod(f"/api-sdk/disconnect?serial={esn}", 10)
+
+
 def muestra():
     """Una muestra de telemetría. Nunca lanza excepción."""
     t = int(time.time())
@@ -57,6 +73,10 @@ def muestra():
     bot = info["robots"][0]
     # wire-pod tarda ~20 s en rendirse si el robot no responde: esperar más para recibir su error real
     bat, err = wirepod_json(f"/api-sdk/get_battery?serial={bot['esn']}", 35)
+    if not bat and robot_en_red(bot["ip_address"]):
+        # robot en la red pero wire-pod no habla con él: conexión caducada (p. ej. tras reiniciarse)
+        renovar_conexion(bot["esn"])
+        bat, err = wirepod_json(f"/api-sdk/get_battery?serial={bot['esn']}", 35)
     s = {"t": t, "wirepod": True, "online": bat is not None, "esn": bot["esn"], "ip": bot.get("ip_address")}
     if bat:
         # protobuf->JSON de Go omite ceros/false: usar get con valor por defecto
@@ -68,12 +88,44 @@ def muestra():
     return s
 
 
+def reconectar():
+    """Diagnóstico paso a paso + renovación de la conexión. Devuelve los pasos para mostrarlos en la web."""
+    pasos = []
+    info, err = wirepod_json("/api-sdk/get_sdk_info", 5)
+    if not info:
+        pasos.append(["wire-pod", False, "No responde. Ábrelo desde el menú Inicio (WirePod) o con iniciar_web.bat."])
+        return {"ok": False, "pasos": pasos}
+    pasos.append(["wire-pod", True, "En marcha"])
+    bot = info["robots"][0]
+    if not robot_en_red(bot["ip_address"], 5):
+        pasos.append(["Robot en la red", False, "No responde en su IP. ¿Está encendido, arrancando o fuera de la Wi-Fi? "
+                      "Si acaba de reiniciarse, espera 1–2 minutos y vuelve a probar. Si cambió de red, sigue el protocolo de cambio de Wi-Fi."])
+        return {"ok": False, "pasos": pasos}
+    pasos.append(["Robot en la red", True, "Responde en su IP"])
+    renovar_conexion(bot["esn"])
+    pasos.append(["Conexión renovada", True, "wire-pod ha descartado la conexión anterior"])
+    bat, err = wirepod_json(f"/api-sdk/get_battery?serial={bot['esn']}", 35)
+    if bat:
+        pasos.append(["Comunicación con el robot", True, "Responde correctamente"])
+        guardar(muestra())  # que la web no siga mostrando la última muestra «sin conexión»
+        return {"ok": True, "pasos": pasos}
+    pasos.append(["Comunicación con el robot", False, f"Sigue fallando: {(err or '')[:160]}. Si acaba de arrancar, "
+                  "espera un minuto y repite. Si persiste, cierra y vuelve a abrir wire-pod."])
+    return {"ok": False, "pasos": pasos}
+
+
+_escritura = threading.Lock()  # registrador y /reconectar escriben en el mismo fichero
+
+
+def guardar(s):
+    with _escritura, TELEMETRIA.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(s) + "\n")
+
+
 def registrador():
     DATA.mkdir(exist_ok=True)
     while True:
-        s = muestra()
-        with TELEMETRIA.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(s) + "\n")
+        guardar(muestra())
         time.sleep(INTERVALO)
 
 
@@ -191,6 +243,8 @@ class Handler(SimpleHTTPRequestHandler):
             from urllib.parse import parse_qs, urlparse
             horas = float(parse_qs(urlparse(self.path).query).get("horas", ["24"])[0])
             return self.enviar(200, json.dumps(leer_telemetria(horas)).encode())
+        if self.path == "/reconectar":
+            return self.enviar(200, json.dumps(reconectar(), ensure_ascii=False).encode())
         if self.path.startswith("/voz"):
             from urllib.parse import parse_qs, urlparse
             n = int(parse_qs(urlparse(self.path).query).get("n", ["500"])[0])

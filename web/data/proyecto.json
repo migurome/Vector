@@ -57,7 +57,11 @@
     {"fecha": "2026-11-19", "titulo": "SDK de Python funcionando",
      "texto": "Python 3.12 junto al 3.14 y entorno .venv. El asistente oficial fallaba («cert does not exist»: wire-pod no tenía el certificado de DDL); scripts/configurar_sdk.py lo lee del propio robot por TLS. hola_vector.py: conecta, toma control, habla, mueve y hace foto. pantalla.py: imágenes y GIF en la cara (184×96)."},
     {"fecha": "2026-11-19", "titulo": "Registro de «Hey Vector», guías y preguntas",
-     "texto": "wire-pod solo guarda en memoria las 50 últimas órdenes (/api/get_logs); server.py las copia cada 10 s a web/data/voz.jsonl (fuera de Git). La web muestra cuántas hay, % entendidas, órdenes más usadas y la lista filtrable. Primer dato: de 7 activaciones solo 1 era una orden real («qué hora es»); el resto, frases sueltas de conversaciones. También: secciones Guías y Preguntas y respuestas."}
+     "texto": "wire-pod solo guarda en memoria las 50 últimas órdenes (/api/get_logs); server.py las copia cada 10 s a web/data/voz.jsonl (fuera de Git). La web muestra cuántas hay, % entendidas, órdenes más usadas y la lista filtrable. Primer dato: de 7 activaciones solo 1 era una orden real («qué hora es»); el resto, frases sueltas de conversaciones. También: secciones Guías y Preguntas y respuestas."},
+    {"fecha": "2026-11-19", "titulo": "Reconexión tras reiniciarse el robot",
+     "texto": "El robot se apagó y reinició; después respondía al ping pero wire-pod recibía 401 y timeouts: seguía usando la conexión gRPC anterior, ya inválida. Solución: /api-sdk/disconnect la descarta y la siguiente llamada la recrea (volvió al instante). La web lo hace sola si ve el robot en la red sin respuesta, y añade un botón «Reconectar» con diagnóstico paso a paso (wire-pod → robot en la red → conexión)."},
+    {"fecha": "2026-11-19", "titulo": "Voz de Vector y signos españoles",
+     "texto": "Su sintetizador (inglés) lee mal ¿, ¡ y las tildes. El cuadro Hablar los quita antes de enviar (á→a…, se mantiene la ñ y el ? final para la entonación) y las frases rápidas van sin ellos."}
   ],
   "protocolo_wifi": [
     "Conecta el PC a la red nueva y comprueba en Windows que es «Red privada» (Configuración → Red → propiedades). Si es pública, el firewall puede bloquear a wire-pod.",
