@@ -212,7 +212,7 @@
         ".venv\\Scripts\\python.exe examples\\python\\pantalla.py foto.jpg 8 — una imagen durante 8 segundos",
         ".venv\\Scripts\\python.exe examples\\python\\pantalla.py animacion.gif 3 — un GIF animado, 3 vueltas",
         ".venv\\Scripts\\python.exe examples\\python\\cubo.py — luces del cubo: demo arcoíris, un color (rojo, azul, #ff00aa…) u off",
-        ".venv\\Scripts\\python.exe examples\\python\reacciones.py 15 — 15 minutos de reacciones: saluda a quien reconoce, comenta si sonríes y agradece caricias"
+        ".venv\\Scripts\\python.exe examples\\python\\reacciones.py 15 — 15 minutos de reacciones: saluda a quien reconoce, comenta si sonríes y agradece caricias"
       ],
       "nota": "pantalla.py adapta cualquier imagen a 184×96 sin deformarla (bandas negras si la proporción no coincide)."
     },
