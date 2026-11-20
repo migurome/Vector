@@ -52,6 +52,12 @@ no encontraba el robot por Bluetooth):
    RTS v2) → tras reiniciar, PIN de nuevo → `anki-auth 2vMhFgktH3Jrbemm2WHkfGN` (token que usa wire-pod,
    `chipper/pkg/wirepod/setup/ble.go`). Resultado: `AuthorizedAsSecondary` y el robot aparece en
    `%APPDATA%\wire-pod\jdocs\botSdkInfo.json` como `activated: true`.
+5. **Cambio de IP (20-11-2026)**: el router dio al robot otra IP (.36) y la suya (.34) al PC. wire-pod
+   seguía usando la de `botSdkInfo.json`, se conectaba a sí mismo y fallaba con `unknown service
+   Anki.Vector.external_interface.ExternalInterface`. wire-pod no tiene API para cambiarla y la guarda en
+   memoria. «Reconectar» de la web lo resuelve: busca el robot en la red por su certificado (`Vector-XXXX`),
+   para wire-pod, cambia la IP en el fichero, lo relanza y vuelve a ejecutar `scripts/configurar_sdk.py`.
+   Para evitarlo: reservar la IP del robot en el DHCP del router.
 
 ## Extender wire-pod
 

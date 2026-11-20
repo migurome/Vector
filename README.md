@@ -51,11 +51,13 @@ docs/                 Documentación propia en castellano (empieza por aquí)
   05-sdk-y-apis.md
   06-firmware-y-desbloqueo.md
   07-catalogo-de-recursos.md
+  08-cambio-de-wifi.md
+  09-desbloqueo-y-rescate.md
 examples/python/      Ejemplos mínimos con el SDK Python
 tools/vector-ble-cli/ Configuración por Bluetooth desde terminal (emparejar, Wi-Fi, OTA, auth)
 web/                  Vector Hub: server.py + static/index.html + data/proyecto.json
 iniciar_web.bat       Arranca wire-pod (si hace falta) y la web
-scripts/              Clonado de repos y diagnóstico Bluetooth
+scripts/              Clonado de repos, diagnóstico Bluetooth, SDK y kit de rescate
 repos.txt             Lista de repos de referencia (código fuente, SDKs, docs)
 scripts/clone_repos.ps1  Clona/actualiza todos los repos de repos.txt en third_party/
 third_party/          (ignorado por git) copias locales de los repos externos
@@ -67,7 +69,7 @@ third_party/          (ignorado por git) copias locales de los repos externos
    de <https://github.com/kercre123/WirePod/releases/latest>) y emparejar el robot. Ver [04-wire-pod](docs/04-wire-pod.md).
 2. **Probar el SDK** (Python 3.11/3.12, no 3.14): `pip install wirepod_vector_sdk`, `python -m anki_vector.configure` y ejecutar [`examples/python/hola_vector.py`](examples/python/hola_vector.py).
 3. **Descargar el código de referencia**: `powershell -File scripts\clone_repos.ps1`.
-4. Si queremos tocar el sistema operativo: leer **entero** [06-firmware](docs/06-firmware-y-desbloqueo.md) antes de desbloquear.
+4. Si queremos tocar el sistema operativo: leer **entero** [06-firmware](docs/06-firmware-y-desbloqueo.md) antes de desbloquear, y hacer el kit de rescate de [09-desbloqueo-y-rescate](docs/09-desbloqueo-y-rescate.md).
 
 ## Ruta de desarrollo propuesta
 

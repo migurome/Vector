@@ -6,10 +6,12 @@ cada minuto en web/data/telemetria.jsonl.  Solo librería estándar de Python.
 Uso:  python web/server.py          -> http://localhost:8090
 Variables opcionales: WIREPOD=http://localhost:8080  PORT=8090  INTERVALO=60
 """
+import configparser
 import json
 import os
 import re
 import socket
+import ssl
 import subprocess
 import tempfile
 import threading
@@ -17,6 +19,7 @@ import time
 import urllib.error
 import urllib.request
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -33,6 +36,8 @@ WIREPOD = os.environ.get("WIREPOD", "http://localhost:8080").rstrip("/")
 PORT = int(os.environ.get("PORT", "8090"))
 INTERVALO = int(os.environ.get("INTERVALO", "60"))
 MAX_MUESTRAS = 10080  # una semana a 1/min
+WIREPOD_INFO = Path(os.environ.get("APPDATA", "")) / "wire-pod" / "jdocs" / "botSdkInfo.json"
+CHIPPER = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "wire-pod" / "chipper" / "chipper.exe"
 
 
 def leer_jsonl(path, ultimas=None):
@@ -90,6 +95,62 @@ def robot_en_red(ip, timeout=3):
             return True
     except OSError:
         return False
+
+
+def nombre_robot(ip, timeout=3):
+    """'Vector-XXXX' si en ip:443 responde un Vector (por su certificado); None si no responde o es otra cosa
+    (p. ej. el propio PC con wire-pod, si el router le ha dado la IP que tenía el robot)."""
+    try:
+        der = ssl.PEM_cert_to_DER_cert(ssl.get_server_certificate((ip, 443), timeout=timeout))
+    except (OSError, ValueError):
+        return None
+    m = re.search(rb"Vector-[A-Z0-9]{4}", der)  # el CN va en claro dentro del DER; sin dependencias
+    return m.group().decode() if m else None
+
+
+def nombre_esperado(esn):
+    """Nombre del robot según la config del SDK (~/.anki_vector/sdk_config.ini), o None."""
+    cfg = configparser.ConfigParser()
+    cfg.read(Path.home() / ".anki_vector" / "sdk_config.ini", encoding="utf-8")
+    return cfg.get(esn, "name", fallback=None)
+
+
+def buscar_robot(ip_antigua, nombre):
+    """Busca el robot en la misma /24 que su IP antigua. Devuelve la IP nueva o None.
+    shortcut: solo la misma subred; si cambia de red Wi-Fi sigue haciendo falta el protocolo de cambio de Wi-Fi."""
+    base = ip_antigua.rsplit(".", 1)[0]
+
+    def probar(i):
+        ip = f"{base}.{i}"
+        if ip == ip_antigua or not robot_en_red(ip, 0.6):
+            return None
+        n = nombre_robot(ip)
+        return ip if n and (nombre is None or n == nombre) else None
+
+    with ThreadPoolExecutor(64) as ex:
+        return next((ip for ip in ex.map(probar, range(1, 255)) if ip), None)
+
+
+def cambiar_ip_wirepod(esn, ip):
+    """wire-pod no tiene API para esto y guarda la IP en memoria: pararlo, editar su fichero y relanzarlo.
+    Devuelve None si todo va bien o un texto de error."""
+    if not WIREPOD_INFO.exists() or not CHIPPER.exists():
+        return f"No encuentro wire-pod ({WIREPOD_INFO} / {CHIPPER})"
+    subprocess.run(["taskkill", "/IM", "chipper.exe", "/F"], capture_output=True)
+    time.sleep(2)
+    info = json.loads(WIREPOD_INFO.read_text(encoding="utf-8"))
+    for bot in info["robots"]:
+        if bot["esn"] == esn:
+            bot["ip_address"] = ip
+    WIREPOD_INFO.write_text(json.dumps(info), encoding="utf-8")
+    subprocess.Popen([str(CHIPPER)], cwd=str(CHIPPER.parent),
+                     creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+    for _ in range(30):  # wire-pod tarda unos segundos en arrancar
+        time.sleep(1)
+        bot, _ = robot_registrado()
+        if bot:
+            return None if bot["ip_address"] == ip else "wire-pod ha arrancado con otra IP"
+    return "wire-pod no ha vuelto a arrancar; ábrelo desde el menú Inicio"
 
 
 def renovar_conexion(esn):
@@ -154,11 +215,27 @@ def reconectar():
     if not bot:
         return {"ok": False, "pasos": [["wire-pod", False, "No responde. Ábrelo desde el menú Inicio (WirePod) o con iniciar_web.bat."]]}
     pasos = [["wire-pod", True, "En marcha"]]
-    if not robot_en_red(bot["ip_address"], 5):
-        pasos.append(["Robot en la red", False, "No responde en su IP. ¿Está encendido, arrancando o fuera de la Wi-Fi? "
-                      "Si acaba de reiniciarse, espera 1–2 minutos y vuelve a probar. Si cambió de red, sigue el protocolo de cambio de Wi-Fi."])
-        return {"ok": False, "pasos": pasos}
-    pasos.append(["Robot en la red", True, "Responde en su IP"])
+    ip = bot["ip_address"]
+    if nombre_robot(ip, 5):
+        pasos.append(["Robot en la red", True, "Responde en su IP"])
+    else:
+        # el router puede haberle dado otra IP (y la suya a otro equipo): buscarlo en la red
+        nueva = buscar_robot(ip, nombre_esperado(bot["esn"]))
+        if not nueva:
+            pasos.append(["Robot en la red", False, f"No responde en {ip} ni en otra IP de la red. ¿Está encendido, arrancando o fuera de la Wi-Fi? "
+                          "Si acaba de reiniciarse, espera 1–2 minutos y vuelve a probar. Si cambió de red, sigue el protocolo de cambio de Wi-Fi."])
+            return {"ok": False, "pasos": pasos}
+        pasos.append(["Robot en la red", True, f"Ha cambiado de IP: {ip} → {nueva}"])
+        err = cambiar_ip_wirepod(bot["esn"], nueva)
+        if err:
+            pasos.append(["IP nueva en wire-pod", False, err])
+            return {"ok": False, "pasos": pasos}
+        pasos.append(["IP nueva en wire-pod", True, "Guardada y wire-pod reiniciado"])
+        if VENV_PY.exists():  # el SDK (reacciones, pantalla) guarda su propia copia de la IP
+            r = subprocess.run([str(VENV_PY), str(BASE.parent / "scripts" / "configurar_sdk.py")], capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", timeout=90, env=ENV_SDK)
+            pasos.append(["SDK actualizado", r.returncode == 0, "Configurado con la IP nueva" if r.returncode == 0
+                          else (r.stderr.strip().splitlines() or ["error desconocido"])[-1][:160]])
     renovar_conexion(bot["esn"])
     pasos.append(["Conexión renovada", True, "wire-pod ha descartado la conexión anterior"])
     bat, err = bateria(bot["esn"])
@@ -185,24 +262,100 @@ def _leer_salida(proc):
                 REACCIONES["lineas"] = (REACCIONES["lineas"] + [ln])[-200:]
 
 
-def reacciones(accion, minutos=10):
+MODOS = ("reacciones", "tranquila", "vigilante")  # los de reacciones.py
+
+
+def reacciones(accion, minutos=10, modo="reacciones"):
     with _reac_lock:
         p = REACCIONES["proc"]
         activo = p is not None and p.poll() is None
         if accion == "start" and not activo:
             if not VENV_PY.exists():
                 return {"error": "falta el entorno .venv con el SDK (ver guía del SDK)"}
-            p = subprocess.Popen([str(VENV_PY), "-I", str(EJEMPLOS / "reacciones.py"), f"{minutos:g}"],
+            if modo not in MODOS:
+                return {"error": f"modo desconocido: {modo}"}
+            p = subprocess.Popen([str(VENV_PY), "-I", str(EJEMPLOS / "reacciones.py"), f"{minutos:g}", modo],
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
                                  errors="replace", env=ENV_SDK)
-            REACCIONES.update(proc=p, inicio=time.time(), lineas=[])
+            REACCIONES.update(proc=p, inicio=time.time(), lineas=[], modo=modo)
             threading.Thread(target=_leer_salida, args=(p,), daemon=True).start()
             activo = True
         elif accion == "stop" and activo:
             p.terminate()
             REACCIONES["lineas"].append(time.strftime("%H:%M:%S") + " Parado desde la web.")
             activo = False
-        return {"activo": activo, "inicio": REACCIONES["inicio"], "lineas": REACCIONES["lineas"][-60:]}
+        return {"activo": activo, "inicio": REACCIONES["inicio"], "modo": REACCIONES.get("modo"),
+                "lineas": REACCIONES["lineas"][-60:]}
+
+
+# ---------- oyentes del SDK: scripts que solo escuchan y escriben una línea JSON por dato ----------
+
+class OyenteSDK:
+    def __init__(self, script, minutos, al_leer):
+        self.script, self.minutos, self.al_leer = script, minutos, al_leer
+        self.proc, self.error = None, None
+        self.lock = threading.Lock()  # dos «start» a la vez no deben lanzar dos procesos
+
+    def activo(self):
+        return self.proc is not None and self.proc.poll() is None
+
+    def _leer(self, proc):
+        for ln in proc.stdout:
+            if ln.startswith("{"):
+                try:
+                    self.al_leer(json.loads(ln))
+                except ValueError:
+                    pass
+            elif "rror" in ln:  # Error / error del SDK: lo último que dijo antes de caerse
+                self.error = ln.strip()[:200]
+
+    def accion(self, accion):
+        """start / stop / estado. Devuelve un texto de error o None."""
+        with self.lock:
+            if accion == "start" and not self.activo():
+                if not VENV_PY.exists():
+                    return "falta el entorno .venv con el SDK (ver guía del SDK)"
+                self.error = None
+                self.proc = subprocess.Popen([str(VENV_PY), "-I", str(EJEMPLOS / self.script), str(self.minutos)],
+                                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                             encoding="utf-8", errors="replace", env=ENV_SDK)
+                threading.Thread(target=self._leer, args=(self.proc,), daemon=True).start()
+            elif accion == "stop" and self.activo():
+                self.proc.terminate()
+        return None
+
+
+# posición: solo la última (examples/python/posicion.py)
+POSICION = {"ultima": None}
+OYENTE_POS = OyenteSDK("posicion.py", 30, lambda d: POSICION.update(ultima=d))
+
+
+def posicion(accion):
+    if accion == "start" and not OYENTE_POS.activo():
+        POSICION["ultima"] = None
+    err = OYENTE_POS.accion(accion)
+    return {"error": err} if err else {"activo": OYENTE_POS.activo(), "pose": POSICION["ultima"], "error": OYENTE_POS.error}
+
+
+# registro técnico estilo dmesg: búfer circular numerado (examples/python/registro.py)
+REGISTRO = deque(maxlen=5000)
+_reg_n = [0]
+
+
+def _al_registro(d):
+    _reg_n[0] += 1  # un solo hilo lector: sin carreras
+    REGISTRO.append({**d, "n": _reg_n[0]})
+
+
+OYENTE_REG = OyenteSDK("registro.py", 120, _al_registro)
+
+
+def registro(accion, desde=0):
+    err = OYENTE_REG.accion(accion)
+    if err:
+        return {"error": err}
+    return {"activo": OYENTE_REG.activo(), "error": OYENTE_REG.error, "n": _reg_n[0],
+            "lineas": [ln for ln in list(REGISTRO) if ln["n"] > desde]}
 
 
 # ---------- registro de voz ----------
@@ -331,7 +484,15 @@ class Handler(SimpleHTTPRequestHandler):
                 minutos = max(1, min(float(arg("min", "10")), 120))
             except ValueError:
                 minutos = 10
-            return self.enviar_json(200, reacciones(arg("accion", "estado"), minutos))
+            return self.enviar_json(200, reacciones(arg("accion", "estado"), minutos, arg("modo", "reacciones")))
+        if url.path == "/posicion":
+            return self.enviar_json(200, posicion(arg("accion", "estado")))
+        if url.path == "/registro":
+            try:
+                desde = int(arg("desde", "0"))
+            except ValueError:
+                desde = 0
+            return self.enviar_json(200, registro(arg("accion", "estado"), desde))
         if url.path == "/reconectar":
             return self.enviar_json(200, reconectar())
         if url.path == "/voz":

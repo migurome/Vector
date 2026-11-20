@@ -63,8 +63,8 @@
     {
       "id": "F8",
       "nombre": "Firmware propio (WireOS)",
-      "avance": 5,
-      "detalle": "Documentado el desbloqueo y la compilación. Requiere Linux y tiene riesgo de dejar el robot inservible."
+      "avance": 20,
+      "detalle": "Herramienta de desbloqueo verificada (unlock-prod y websetup activos). Kit de rescate en la USB con scripts/backup_rescate.py: datos de wire-pod y SDK, caras y las 4 OTA verificadas (6086ep actual, Unlock, Revert-To-Prod y WireOS 3.0.2). Guía de fallos en docs/09. Falta: desbloquear e instalar WireOS. Riesgo de dejar el robot inservible."
     }
   ],
   "memoria": [
@@ -121,7 +121,7 @@
     {
       "fecha": "2026-11-19",
       "titulo": "Control remoto",
-      "texto": "Junto a la cámara: «Tomar control» (wire-pod mantiene el control hasta liberarlo), cruceta de ruedas, cabeza y brazo con mantener pulsado, velocidad 40–200 mm/s, teclado (flechas/WASD, R/F, T/G, espacio) y captura. «Modo libre» devuelve la autonomía. Seguridad: se para al soltar, al perder el foco la pestaña y se libera al cerrar la web."
+      "texto": "Junto a la cámara: «Tomar control» (wire-pod mantiene el control hasta liberarlo), cruceta de ruedas, cabeza y brazo con mantener pulsado, velocidad 40–200 mm/s, teclado (flechas/WASD, R/F, T/G, espacio), mando (sticks, gatillos, B para parar) y captura. «Modo libre» devuelve la autonomía. Seguridad: se para al soltar, al perder el foco la pestaña y se libera al cerrar la web."
     },
     {
       "fecha": "2026-11-19",

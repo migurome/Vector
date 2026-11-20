@@ -87,6 +87,15 @@ input[type=range]{accent-color:var(--eye);padding:0;border:0;background:none}
 .empty{color:var(--muted);font-size:14px}
 .note{color:var(--muted);font-size:13px;margin-top:8px}
 .msg{font-size:13px;color:var(--text2);min-height:1.5em}
+#tab-robot > section{position:relative}
+.grip{position:absolute;top:2px;left:50%;transform:translateX(-50%);z-index:2;width:48px;height:16px;padding:0;border:0;border-radius:8px;
+  background:transparent;color:var(--muted);font-size:12px;line-height:16px;letter-spacing:1px;cursor:grab;opacity:.6}
+.grip:hover,.grip:focus-visible{opacity:1;color:var(--eye);background:var(--card2);outline:1px solid var(--eye)}
+#tab-robot > section.arrastrando{opacity:.35}
+.dmesg{margin:0;height:min(62vh,640px);overflow:auto;background:#000;border:1px solid var(--line);border-radius:14px;padding:12px 14px;
+  font:12.5px/1.55 ui-monospace,Consolas,monospace;color:var(--text2);white-space:pre-wrap;overflow-wrap:anywhere}
+.dmesg .ts{color:var(--muted)} .dmesg .fac{color:var(--gold)}
+.l3{color:var(--crit-text);font-weight:700} .l4{color:var(--warn)} .l5{color:var(--good-text);font-weight:600} .l6{color:var(--text)} .l7{color:var(--muted)}
 details summary{font-family:var(--font-display)}
 :focus-visible{outline:2px solid var(--eye);outline-offset:2px}
 .rc{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
@@ -161,6 +170,7 @@ details summary{font-family:var(--font-display)}
   <div class="tabs" role="tablist" aria-label="Secciones">
     <button role="tab" id="tabbtn-robot" aria-controls="tab-robot" aria-selected="true" data-tab="robot">Robot</button>
     <button role="tab" id="tabbtn-proyecto" aria-controls="tab-proyecto" aria-selected="false" data-tab="proyecto">Proyecto</button>
+    <button role="tab" id="tabbtn-log" aria-controls="tab-log" aria-selected="false" data-tab="log">Log</button>
   </div>
 </div></header>
 
@@ -274,13 +284,26 @@ details summary{font-family:var(--font-display)}
         <label class="k" for="speed">Velocidad: <b id="speedv">100</b> mm/s</label>
         <input type="range" id="speed" min="40" max="200" step="20" value="100" style="min-width:0">
         <button class="btn" id="rcsnap">Captura</button>
+        <button class="btn" id="padbtn" aria-pressed="false">Activar mando</button>
       </div>
     </div>
-    <div class="note">Mantén pulsado para moverlo; al soltar se para. Teclado: flechas o WASD (ruedas), R/F (cabeza), T/G (brazo), espacio (parar). Al terminar pulsa «Modo libre».</div>
+    <div class="note">Mantén pulsado para moverlo; al soltar se para. Teclado: flechas o WASD (ruedas), R/F (cabeza), T/G (brazo), espacio (parar). Mando: stick izquierdo (ruedas), stick derecho (cabeza), gatillos (brazo), B (parar); actívalo con «Activar mando». <b id="padst"></b> Al terminar pulsa «Modo libre».</div>
     </div></div>
   </section>
 
-  <section class="grid two">
+  <section id="mapa-sec" class="card">
+    <div class="row" style="margin-bottom:8px">
+      <h2 style="margin:0">Mapa</h2><span class="spacer"></span>
+      <button class="btn" id="mapclr">Borrar rastro</button>
+      <button class="btn" id="mapbtn" aria-pressed="false">Ver posición</button>
+    </div>
+    <canvas id="mapa" width="960" height="400" role="img" aria-label="Mapa con la posición de Vector, su rastro y la base"
+            style="width:100%;height:auto;display:block;background:var(--card2);border:1px solid var(--line);border-radius:14px"></canvas>
+    <div class="note" id="mappos">Posición por odometría: cuenta desde donde empezó (la cruz). Si lo levantan, empieza de cero.</div>
+    <div class="msg" id="mapmsg" aria-live="polite"></div>
+  </section>
+
+  <section id="caras-fotos" class="grid two">
     <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Caras conocidas</h2><span class="spacer"></span><button class="btn" id="facesbtn">Cargar</button></div><div id="faces" class="empty">—</div></div>
     <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Fotos</h2><span class="spacer"></span><button class="btn" id="photosbtn">Cargar</button></div><div id="photos" class="photos"><span class="empty">Dile «Hey Vector, hazme una foto».</span></div></div>
   </section>
@@ -300,28 +323,46 @@ details summary{font-family:var(--font-display)}
     </div>
     <div class="msg" id="ctrlmsg" aria-live="polite"></div>
   </section>
+  <div id="ordenpie" class="row">
+    <span class="note" style="margin:0">Arrastra el asa ⋮⋮ de cada sección para ordenarlas (o ↑/↓ con el foco en ella).</span>
+    <span class="spacer"></span><button class="btn" id="ordenreset">Restablecer orden</button>
+  </div>
+  <div class="msg" id="ordenmsg" aria-live="polite"></div>
 </div>
 
 <div id="tab-proyecto" role="tabpanel" aria-labelledby="tabbtn-proyecto" hidden>
   <nav class="subnav" aria-label="Apartados del proyecto">
-    <a href="#reacciones">Reacciones</a><a href="#telemetria">Telemetría</a><a href="#voz">Registro de voz</a><a href="#vida">Estadísticas</a><a href="#fases">Fases</a>
+    <a href="#reacciones">Comportamientos</a><a href="#telemetria">Telemetría</a><a href="#voz">Registro de voz</a><a href="#vida">Estadísticas</a><a href="#fases">Fases</a>
     <a href="#guias">Guías</a><a href="#faq">Preguntas</a><a href="#memoria">Memoria</a><a href="#wifi">Cambio de Wi-Fi</a><a href="#ficha-sec">Ficha</a>
   </nav>
 
   <section id="reacciones" class="card">
     <div class="row" style="margin-bottom:8px">
-      <h2 style="margin:0">Reacciones <small>en pruebas (Fase 5)</small></h2>
-      <span class="pill" id="reacstate"><span class="dot" style="background:var(--muted)"></span><span>Paradas</span></span>
+      <h2 style="margin:0">Comportamientos <small>en pruebas (Fase 5)</small></h2>
+      <span class="pill" id="reacstate"><span class="dot" style="background:var(--muted)"></span><span>Parado</span></span>
       <span class="spacer"></span>
+      <select id="reacmodo" aria-label="Comportamiento" style="width:auto;flex:none">
+        <option value="reacciones">Reacciones</option><option value="tranquila">Mascota tranquila</option><option value="vigilante">Vigilante</option>
+      </select>
       <label class="row" style="gap:6px;font-size:14px">Minutos <input type="number" id="reacmin" value="10" min="1" max="120" style="width:72px;flex:none"></label>
       <button class="btn primary" id="reacbtn">Activar</button>
     </div>
     <div class="grid two">
       <div>
-        <ol class="steps">
+        <ol class="steps" data-modo="reacciones">
           <li><b>Saludo.</b> Ponte delante a unos 50 cm, con la cara a la altura de su cámara. Debería decir «Hola Miguel!». Si no te reconoce en medio minuto, dile «Hey Vector, me llamo Miguel» y repite.</li>
           <li><b>Sonrisa.</b> Tras el saludo, sigue delante y sonríe: lo comenta (como mucho una vez cada 3 min).</li>
           <li><b>Caricias.</b> Acaríciale la espalda un segundo o más: reacciona (cada 20 s como mucho).</li>
+        </ol>
+        <ol class="steps" data-modo="tranquila" hidden>
+          <li><b>Sin palabras.</b> Las mismas situaciones que Reacciones, pero no habla: responde con animaciones.</li>
+          <li><b>Saludo.</b> Al reconocerte hace su animación de reencuentro (cada 10 min como mucho).</li>
+          <li><b>Sonrisa y caricias.</b> Responde con su animación de cariño.</li>
+        </ol>
+        <ol class="steps" data-modo="vigilante" hidden>
+          <li><b>Caras desconocidas.</b> Si ve una cara que no tiene guardada, hace una foto (como mucho una por minuto).</li>
+          <li><b>Fotos.</b> Aparecen en el registro de la derecha; se guardan en <code>web/static/vigilante/</code> y no se suben a git.</li>
+          <li><b>Consejo.</b> Déjalo fuera de la base mirando hacia la puerta. Solo detecta caras, no cualquier movimiento.</li>
         </ol>
         <div class="note">Funciona también en la base. Si estás en control manual, pásalo a «Modo libre» o no podrá hablar.</div>
       </div>
@@ -385,6 +426,31 @@ details summary{font-family:var(--font-display)}
   </section>
 
   <section id="ficha-sec" class="card"><h2>Ficha del robot</h2><dl id="ficha"></dl></section>
+</div>
+
+<div id="tab-log" role="tabpanel" aria-labelledby="tabbtn-log" hidden>
+  <section class="card">
+    <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
+      <h2 style="margin:0">dmesg</h2>
+      <span class="pill" id="logstate"><span class="dot" style="background:var(--muted)"></span><span>Parado</span></span>
+      <span class="spacer"></span>
+      <input id="loggrep" placeholder="grep (texto o /regex/)" aria-label="Filtrar líneas" style="max-width:220px">
+      <select id="loglvl" aria-label="Nivel mínimo" style="width:auto;flex:none">
+        <option value="7">debug (todo)</option><option value="6" selected>info</option><option value="5">notice</option>
+        <option value="4">warn</option><option value="3">err</option>
+      </select>
+      <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="logT" style="flex:none;min-width:0">-T</label>
+      <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="logfollow" checked style="flex:none;min-width:0">Seguir</label>
+      <button class="btn" id="logclr">Limpiar</button>
+      <button class="btn" id="logsave">Guardar</button>
+      <button class="btn" id="logbtn" aria-pressed="false">Escuchar</button>
+    </div>
+    <pre id="logpre" class="dmesg" tabindex="0" aria-label="Registro técnico del robot"></pre>
+    <div class="note">Solo cambios, no cada lectura. Niveles: <span class="l3">err</span> sin suelo o cayendo ·
+      <span class="l4">warn</span> levantado, en brazos, empujado · <span class="l5">notice</span> comportamiento que decide y voz ·
+      <span class="l6">info</span> ruedas, obstáculos, estímulos · <span class="l7">debug</span> resto de indicadores. Escucha sin tomar el control; se para solo a las 2 h.</div>
+    <div class="msg" id="logmsg" aria-live="polite"></div>
+  </section>
 </div>
 </main>
 
@@ -562,17 +628,18 @@ function showTab(name) {
   document.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
   $("#tab-robot").hidden = name !== "robot";
   $("#tab-proyecto").hidden = name !== "proyecto";
+  $("#tab-log").hidden = name !== "log";
   if (name === "proyecto" && samples.length) drawChart(); // el gráfico mide su ancho: dibujarlo ya visible
 }
 document.querySelectorAll("[data-tab]").forEach((b) => b.onclick = () => {
-  history.replaceState(null, "", b.dataset.tab === "proyecto" ? "#proyecto" : "#");
+  history.replaceState(null, "", b.dataset.tab === "robot" ? "#" : "#" + b.dataset.tab);
   showTab(b.dataset.tab);
 });
 // los enlaces internos (#voz, #fases…) abren la pestaña Proyecto
 function tabFromHash() {
   const h = location.hash.slice(1);
   const el = h && document.getElementById(h);
-  showTab(h === "proyecto" || (el && $("#tab-proyecto").contains(el)) ? "proyecto" : "robot");
+  showTab(h === "log" ? "log" : h === "proyecto" || (el && $("#tab-proyecto").contains(el)) ? "proyecto" : "robot");
 }
 addEventListener("hashchange", tabFromHash);
 
@@ -937,25 +1004,33 @@ $("#scrsend").onclick = async () => {
 let reacTimer = null;
 function pintarReacciones(r) {
   const on = !!r.activo;
-  $("#reacstate").innerHTML = on ? `<span class="dot" style="background:var(--good)"></span><span>Activas</span>`
-                                 : `<span class="dot" style="background:var(--muted)"></span><span>Paradas</span>`;
+  $("#reacstate").innerHTML = on ? `<span class="dot" style="background:var(--good)"></span><span>Activo</span>`
+                                 : `<span class="dot" style="background:var(--muted)"></span><span>Parado</span>`;
   $("#reacbtn").textContent = on ? "Parar" : "Activar";
   $("#reacbtn").classList.toggle("primary", !on);
+  if (on && r.modo) { $("#reacmodo").value = r.modo; verModo(); }
+  $("#reacmodo").disabled = on;
+  const celda = (t) => { const f = t.match(/^Foto (vigilante\/[\w.-]+\.jpg)$/);  // foto del vigilante: miniatura enlazada
+    return f ? `<a href="${f[1]}" target="_blank"><img src="${f[1]}" alt="Foto del vigilante" style="max-width:160px;border-radius:8px"></a>` : esc(t); };
   const lineas = (r.lineas || []).slice().reverse();
   $("#reaclog").innerHTML = lineas.length
     ? lineas.map((l) => { const m = l.match(/^(\d\d:\d\d:\d\d) (.*)$/);
-        return m ? `<tr><td style="white-space:nowrap;color:var(--muted)">${m[1]}</td><td>${esc(m[2])}</td></tr>` : `<tr><td colspan="2">${esc(l)}</td></tr>`; }).join("")
-    : `<tr><td class="empty">${on ? "Esperando a que pase algo…" : "El registro aparecerá aquí al activarlas."}</td></tr>`;
+        return m ? `<tr><td style="white-space:nowrap;color:var(--muted)">${m[1]}</td><td>${celda(m[2])}</td></tr>` : `<tr><td colspan="2">${esc(l)}</td></tr>`; }).join("")
+    : `<tr><td class="empty">${on ? "Esperando a que pase algo…" : "El registro aparecerá aquí al activarlo."}</td></tr>`;
   clearTimeout(reacTimer);
   if (on) reacTimer = setTimeout(() => api("/reacciones?accion=estado").then(pintarReacciones).catch(() => {}), 2000);
 }
 $("#reacbtn").onclick = async () => {
   const b = $("#reacbtn"); b.disabled = true;
   const parar = b.textContent === "Parar";
-  try { pintarReacciones(await api(`/reacciones?accion=${parar ? "stop" : "start"}&min=${encodeURIComponent($("#reacmin").value)}`)); }
+  try { pintarReacciones(await api(`/reacciones?accion=${parar ? "stop" : "start"}&min=${encodeURIComponent($("#reacmin").value)}&modo=${$("#reacmodo").value}`)); }
   catch (e) { $("#reaclog").innerHTML = `<tr><td class="empty">Error: ${esc(e.message)}</td></tr>`; }
   b.disabled = false;
 };
+function verModo() {
+  document.querySelectorAll("#reacciones [data-modo]").forEach((ol) => { ol.hidden = ol.dataset.modo !== $("#reacmodo").value; });
+}
+$("#reacmodo").onchange = verModo;
 api("/reacciones?accion=estado").then(pintarReacciones).catch(() => {});
 
 /* ---------- Cámara (MJPEG de wire-pod reenviado por server.py) ---------- */
@@ -1051,12 +1126,231 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault(); held = e.key.toLowerCase(); start(...k);
 });
 document.addEventListener("keyup", (e) => { if (held && e.key.toLowerCase() === held) { held = null; stopAll(); } });
-// seguridad: si la pestaña pierde el foco, parar motores
-window.addEventListener("blur", stopAll);
-document.addEventListener("visibilitychange", () => document.hidden && stopAll());
+// Mando (Gamepad API): stick izq. conduce (proporcional), stick der. cabeza, gatillos brazo, B para.
+// Solo envía con el mando activado y el control tomado, y solo cuando cambia algo; si no, manda todo a 0.
+// Con el mando activado pero sin control, muestra los valores sin mover el robot (sirve para probarlo).
+let pad = {lw: 0, rw: 0, head: 0, lift: 0}, padOn = false;
+const dz = (v = 0) => Math.abs(v) < .15 ? 0 : v; // zona muerta: los sticks nunca vuelven a 0 exacto
+const mando = () => [...(navigator.getGamepads?.() || [])].find(Boolean);
+function leerMando() {
+  const g = padOn && mando();
+  let lee = {lw: 0, rw: 0, head: 0, lift: 0};
+  if (g && !g.buttons[1]?.pressed) {
+    const x = dz(g.axes[0]) * .6, y = -dz(g.axes[1]), v = speed(), bt = (i) => g.buttons[i]?.value || 0;
+    const rueda = (n) => Math.round(Math.max(-1, Math.min(1, n)) * v / 10) * 10;
+    lee = {lw: rueda(y + x), rw: rueda(y - x),
+      head: Math.round(-dz(g.axes[3]) * 4) / 2, lift: Math.round((bt(7) - bt(6)) * 4) / 2};
+  }
+  if (padOn) $("#padst").textContent = !g ? "Mando activado: pulsa un botón del mando para enlazarlo."
+    : `${g.id.slice(0, 40)} · ruedas ${lee.lw}/${lee.rw} · cabeza ${lee.head} · brazo ${lee.lift}${manual ? "" : " (toma el control para moverlo)"}`;
+  const now = manual && !document.hidden && document.hasFocus() ? lee : {lw: 0, rw: 0, head: 0, lift: 0};
+  if (now.lw !== pad.lw || now.rw !== pad.rw) sdkKeep("move_wheels", {lw: now.lw, rw: now.rw});
+  if (now.head !== pad.head) sdkKeep("move_head", {speed: now.head});
+  if (now.lift !== pad.lift) sdkKeep("move_lift", {speed: now.lift});
+  pad = now;
+}
+setInterval(leerMando, 100);
+$("#padbtn").onclick = () => {
+  padOn = !padOn;
+  $("#padbtn").textContent = padOn ? "Desactivar mando" : "Activar mando";
+  $("#padbtn").setAttribute("aria-pressed", String(padOn));
+  if (!padOn) $("#padst").textContent = "";
+  leerMando();
+};
+// seguridad: si la pestaña pierde el foco, parar motores (también los del mando, sin esperar al siguiente ciclo)
+window.addEventListener("blur", () => { stopAll(); leerMando(); });
+document.addEventListener("visibilitychange", () => document.hidden && (stopAll(), leerMando()));
 $("#rcsnap").onclick = () => $("#snapbtn").disabled ? ($("#cammsg").textContent = "Enciende la cámara primero.") : $("#snapbtn").click();
 
+/* ---------- Mapa (posición por odometría, de examples/python/posicion.py) ---------- */
+let mapOn = false, mapT = null, rastro = [], ultPose = null;
+const cssVar = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function dibujarMapa() {
+  const c = $("#mapa"), g = c.getContext("2d"), W = c.width, H = c.height, p = ultPose;
+  // encuadre: origen, rastro, robot y base con 15 cm de margen y al menos 1 m de ancho (mm, x adelante, y izquierda)
+  const pts = [{x: 0, y: 0}, ...rastro, ...(p ? [p] : []), ...(p?.base ? [p.base] : [])];
+  const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
+  const [x0, x1, y0, y1] = [Math.min(...xs) - 150, Math.max(...xs) + 150, Math.min(...ys) - 150, Math.max(...ys) + 150];
+  const k = Math.min(W / Math.max(x1 - x0, 1000), H / Math.max(y1 - y0, 600)); // px por mm
+  const sx = (x) => W / 2 + (x - (x0 + x1) / 2) * k, sy = (y) => H / 2 - (y - (y0 + y1) / 2) * k;
+  g.clearRect(0, 0, W, H);
+  g.strokeStyle = cssVar("--grid"); g.lineWidth = 1; g.beginPath(); // rejilla de 10 cm
+  const vx = W / 2 / k, vy = H / 2 / k, mx = (x0 + x1) / 2, my = (y0 + y1) / 2; // mitad visible y centro, en mm
+  for (let x = Math.ceil((mx - vx) / 100) * 100; x <= mx + vx; x += 100) { g.moveTo(sx(x), 0); g.lineTo(sx(x), H); }
+  for (let y = Math.ceil((my - vy) / 100) * 100; y <= my + vy; y += 100) { g.moveTo(0, sy(y)); g.lineTo(W, sy(y)); }
+  g.stroke();
+  g.strokeStyle = cssVar("--muted"); g.lineWidth = 2; g.beginPath(); // origen
+  g.moveTo(sx(0) - 7, sy(0) - 7); g.lineTo(sx(0) + 7, sy(0) + 7); g.moveTo(sx(0) + 7, sy(0) - 7); g.lineTo(sx(0) - 7, sy(0) + 7); g.stroke();
+  if (rastro.length > 1) {
+    g.strokeStyle = cssVar("--series"); g.globalAlpha = .45; g.lineWidth = 2; g.beginPath();
+    rastro.forEach((q, i) => i ? g.lineTo(sx(q.x), sy(q.y)) : g.moveTo(sx(q.x), sy(q.y))); g.stroke(); g.globalAlpha = 1;
+  }
+  const figura = (q, color, dibujo) => { g.save(); g.translate(sx(q.x), sy(q.y)); g.rotate(-q.ang * Math.PI / 180); g.scale(k, k);
+    g.fillStyle = color; dibujo(); g.restore(); };
+  if (p?.base) {
+    figura(p.base, cssVar("--gold"), () => g.fillRect(-50, -45, 100, 90));
+    g.fillStyle = cssVar("--gold"); g.font = "12px system-ui"; g.fillText("Base", sx(p.base.x) + 10, sy(p.base.y) - 10);
+  }
+  if (p) figura(p, cssVar("--eye"), () => { g.beginPath(); g.moveTo(60, 0); g.lineTo(-40, 32); g.lineTo(-40, -32); g.closePath(); g.fill(); });
+}
+async function mapaTick() {
+  try {
+    const r = await api("/posicion");
+    if (!r.activo) return pararMapa(r.error ? "Error: " + r.error : "Se ha parado (máximo 30 min). Pulsa «Ver posición» otra vez.");
+    const p = r.pose;
+    if (!p) return;
+    if (ultPose && p.origen !== ultPose.origen) { rastro = []; $("#mapmsg").textContent = "Lo han levantado: nuevo origen, el rastro empieza de cero."; }
+    else if (!ultPose) $("#mapmsg").textContent = "";
+    const u = rastro[rastro.length - 1];
+    if (!u || Math.hypot(p.x - u.x, p.y - u.y) > 10) { rastro.push({x: p.x, y: p.y}); if (rastro.length > 3000) rastro.shift(); }
+    ultPose = p;
+    const base = p.en_base ? "en la base" : p.base ? `base a ${(Math.hypot(p.x - p.base.x, p.y - p.base.y) / 10).toFixed(0)} cm` : "base aún no vista";
+    $("#mappos").textContent = `x ${(p.x / 10).toFixed(0)} cm · y ${(p.y / 10).toFixed(0)} cm · ${p.ang.toFixed(0)}° · ${base}`;
+    dibujarMapa();
+  } catch (e) { $("#mapmsg").textContent = "Error: " + e.message; }
+}
+function pararMapa(msg, avisarServidor) {
+  clearInterval(mapT); mapOn = false;
+  $("#mapbtn").textContent = "Ver posición"; $("#mapbtn").setAttribute("aria-pressed", "false");
+  if (avisarServidor) fetch("/posicion?accion=stop", {keepalive: true}).catch(() => {});
+  $("#mapmsg").textContent = msg;
+}
+$("#mapbtn").onclick = async () => {
+  if (sinRobot("#mapmsg")) return;
+  if (mapOn) return pararMapa("Posición parada.", true);
+  try {
+    const r = await api("/posicion?accion=start");
+    if (r.error) throw new Error(r.error);
+  } catch (e) { $("#mapmsg").textContent = "Error: " + e.message; return; }
+  mapOn = true; ultPose = null;
+  $("#mapbtn").textContent = "Parar posición"; $("#mapbtn").setAttribute("aria-pressed", "true");
+  $("#mapmsg").textContent = "Conectando con el robot (unos segundos)…";
+  mapT = setInterval(mapaTick, 300);
+};
+$("#mapclr").onclick = () => { rastro = ultPose ? [{x: ultPose.x, y: ultPose.y}] : []; dibujarMapa(); };
+dibujarMapa();
+
+/* ---------- Robot: reordenar secciones arrastrando (orden en localStorage: comodidad de este navegador) ---------- */
+const robotTab = $("#tab-robot");
+const secciones = () => [...robotTab.children].filter((s) => s.tagName === "SECTION");
+const ORDEN_DEF = secciones().map((s) => s.id);
+const guardarOrden = () => { try { localStorage.setItem("vh-orden-robot", JSON.stringify(secciones().map((s) => s.id))); } catch {} };
+function aplicarOrden(ids) { // las secciones que no estén en la lista (nuevas) van al final
+  [...ids.filter((id) => ORDEN_DEF.includes(id)), ...ORDEN_DEF.filter((id) => !ids.includes(id))]
+    .forEach((id) => robotTab.insertBefore(document.getElementById(id), $("#ordenpie")));
+}
+let arrastrada = null;
+secciones().forEach((s) => {
+  const g = document.createElement("button"), nombre = s.querySelector("h2")?.textContent || "Estado";
+  g.type = "button"; g.className = "grip"; g.textContent = "⋮⋮";
+  g.setAttribute("aria-label", `Mover la sección ${nombre}: arrastra, o flechas arriba y abajo`);
+  g.title = "Arrastra para mover la sección (o ↑/↓ con el foco aquí)";
+  // solo el asa inicia el arrastre: así seleccionar texto o usar los controles de la sección sigue funcionando
+  g.addEventListener("pointerdown", () => s.draggable = true);
+  g.addEventListener("pointerup", () => s.draggable = false);
+  s.addEventListener("dragstart", (e) => {
+    if (e.target !== s) return;
+    arrastrada = s; s.classList.add("arrastrando");
+    e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", s.id);
+  });
+  s.addEventListener("dragend", () => { s.draggable = false; s.classList.remove("arrastrando"); arrastrada = null; guardarOrden(); });
+  s.addEventListener("dragover", (e) => {
+    if (!arrastrada) return;
+    e.preventDefault();
+    if (arrastrada === s) return;
+    const r = s.getBoundingClientRect();
+    robotTab.insertBefore(arrastrada, e.clientY < r.top + r.height / 2 ? s : s.nextElementSibling);
+  });
+  g.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    e.preventDefault();
+    const lista = secciones(), i = lista.indexOf(s), j = i + (e.key === "ArrowUp" ? -1 : 1);
+    if (j < 0 || j >= lista.length) return;
+    robotTab.insertBefore(s, e.key === "ArrowUp" ? lista[j] : lista[j].nextElementSibling);
+    g.focus(); guardarOrden();
+    $("#ordenmsg").textContent = `${nombre}: posición ${j + 1} de ${lista.length}.`;
+  });
+  s.prepend(g);
+});
+robotTab.addEventListener("drop", (e) => arrastrada && e.preventDefault());
+try { aplicarOrden(JSON.parse(localStorage.getItem("vh-orden-robot") || "[]")); } catch {}
+$("#ordenreset").onclick = () => {
+  aplicarOrden(ORDEN_DEF);
+  try { localStorage.removeItem("vh-orden-robot"); } catch {}
+  $("#ordenmsg").textContent = "Orden original restablecido.";
+};
+
+/* ---------- Log estilo dmesg (examples/python/registro.py; el búfer vive en el servidor) ---------- */
+const LVL = {3: "err", 4: "warn", 5: "notice", 6: "info", 7: "debug"};
+let logOn = false, logTimer = null, logDesde = 0, logLineas = [], logT0 = null;
+function logFiltro() {
+  const q = $("#loggrep").value.trim(), min = +$("#loglvl").value;
+  let re = null;
+  if (/^\/.+\/$/.test(q)) try { re = new RegExp(q.slice(1, -1), "i"); } catch { /* regex a medias: se busca como texto */ }
+  return (l) => l.lvl <= min && (!q || (re ? re.test(`${l.fac}: ${l.msg}`) : `${l.fac}: ${l.msg}`.toLowerCase().includes(q.toLowerCase())));
+}
+const logTs = (l) => "[" + ($("#logT").checked
+  ? new Date(l.t * 1000).toLocaleTimeString("es-ES", {hour12: false}) + "." + String(Math.floor(l.t % 1 * 1000)).padStart(3, "0")
+  : (l.t - logT0).toFixed(6).padStart(12)) + "]";
+function lineaLog(l) {
+  const d = document.createElement("div"), ts = document.createElement("span"), f = document.createElement("span");
+  d.className = "l" + l.lvl; d.title = LVL[l.lvl] || l.lvl;
+  ts.className = "ts"; ts.textContent = logTs(l) + " ";
+  f.className = "fac"; f.textContent = l.fac + ": ";
+  d.append(ts, f, l.msg);
+  return d;
+}
+function logPintar(nuevas) { // sin argumento: repinta todo (cambio de filtro)
+  const pre = $("#logpre"), frag = document.createDocumentFragment();
+  (nuevas || logLineas).filter(logFiltro()).forEach((l) => frag.append(lineaLog(l)));
+  if (!nuevas) pre.replaceChildren();
+  pre.append(frag);
+  while (pre.childElementCount > 5000) pre.firstChild.remove();
+  if ($("#logfollow").checked) pre.scrollTop = pre.scrollHeight;
+}
+function logEstado(on, msg) {
+  logOn = on; clearInterval(logTimer);
+  if (on) logTimer = setInterval(logTick, 500);
+  $("#logbtn").textContent = on ? "Parar" : "Escuchar"; $("#logbtn").setAttribute("aria-pressed", String(on));
+  $("#logstate").innerHTML = on ? `<span class="dot" style="background:var(--good)"></span><span>Escuchando</span>`
+    : `<span class="dot" style="background:var(--muted)"></span><span>Parado</span>`;
+  if (msg !== undefined) $("#logmsg").textContent = msg;
+}
+async function logTick() {
+  try {
+    const r = await api("/registro?desde=" + logDesde);
+    if (r.n < logDesde) { logDesde = 0; return; } // el servidor se ha reiniciado: su búfer empieza de cero
+    if (r.lineas.length) {
+      logDesde = r.lineas.at(-1).n;
+      logT0 ??= r.lineas[0].t;
+      logLineas.push(...r.lineas);
+      if (logLineas.length > 5000) logLineas.splice(0, logLineas.length - 5000);
+      logPintar(r.lineas);
+      if ($("#logmsg").textContent.startsWith("Conectando")) $("#logmsg").textContent = "";
+    }
+    if (r.activo !== logOn) logEstado(r.activo, r.activo ? undefined : r.error ? "Error: " + r.error : "Se ha parado.");
+  } catch (e) { $("#logmsg").textContent = "Error: " + e.message; }
+}
+$("#logbtn").onclick = async () => {
+  if (sinRobot("#logmsg")) return;
+  try {
+    const r = await api(`/registro?accion=${logOn ? "stop" : "start"}&desde=${logDesde}`);
+    if (!r.lineas) throw new Error(r.error);
+    logEstado(!logOn, logOn ? "Parado." : "Conectando con el robot (unos segundos)…");
+  } catch (e) { $("#logmsg").textContent = "Error: " + e.message; }
+};
+["#loggrep", "#loglvl", "#logT"].forEach((s) => $(s).addEventListener("input", () => logPintar()));
+$("#logclr").onclick = () => { logLineas = []; $("#logpre").replaceChildren(); }; // como dmesg -C, pero solo en esta vista
+$("#logsave").onclick = () => {
+  const txt = logLineas.filter(logFiltro()).map((l) => `${logTs(l)} ${(LVL[l.lvl] || l.lvl).padEnd(6)} ${l.fac}: ${l.msg}`).join("\n");
+  const a = document.createElement("a");
+  a.download = "vector-dmesg-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".log";
+  a.href = URL.createObjectURL(new Blob([txt + "\n"], {type: "text/plain"})); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+logTick(); // al abrir la web: lo que ya haya en el búfer y, si sigue escuchando, retomar
+
 window.addEventListener("beforeunload", () => {
+  if (mapOn) fetch("/posicion?accion=stop", {keepalive: true});
   if (!$("#cam").hidden) camOff();
   if (manual) { stopAll(); sdkKeep("release_behavior_control"); } // no dejarlo bloqueado al cerrar la web
 });
